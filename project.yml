@@ -1,0 +1,72 @@
+name: Redact
+options:
+  bundleIdPrefix: com.redact
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "15.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    SWIFT_STRICT_CONCURRENCY: complete
+
+targets:
+  Redact:
+    type: application
+    platform: iOS
+    sources:
+      - path: Redact
+        excludes:
+          - "**/.DS_Store"
+    settings:
+      base:
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: true
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: com.redact.app
+        PRODUCT_NAME: Redact
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+    scheme:
+      testTargets:
+        - RedactTests
+
+  RedactTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: RedactTests
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: Redact
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: com.redact.tests
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Redact.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Redact"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+  RedactTestHarness:
+    type: application
+    platform: iOS
+    sources:
+      - path: RedactTestHarness
+        excludes:
+          - "**/.DS_Store"
+      - path: Redact/Engine
+      - path: Redact/Models
+      - path: Redact/Extensions
+    settings:
+      base:
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: true
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: com.redact.testharness
+        PRODUCT_NAME: RedactTestHarness
+    scheme: {}
