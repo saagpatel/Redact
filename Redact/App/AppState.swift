@@ -55,8 +55,8 @@ final class AppState: ObservableObject {
 
 // MARK: - Environment Key for DocumentStore
 
-private struct DocumentStoreKey: EnvironmentKey {
-    nonisolated(unsafe) static let defaultValue = DocumentStore()
+private struct DocumentStoreKey: @preconcurrency EnvironmentKey {
+    @MainActor static let defaultValue = DocumentStore()
 }
 
 extension EnvironmentValues {
