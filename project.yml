@@ -28,6 +28,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         GENERATE_INFOPLIST_FILE: true
         PRODUCT_BUNDLE_IDENTIFIER: com.redact.app
+        DEVELOPMENT_TEAM: 3TGZFKFNA4
         PRODUCT_NAME: Redact
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
