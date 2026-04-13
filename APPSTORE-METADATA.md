@@ -61,13 +61,13 @@ The writing app that hides your work until you're done. Train yourself to write 
 
 ## Support URL
 
-https://github.com/saagpatel/Redact/issues
+*https://github.com/saagpatel/Redact/issues*
 
 ---
 
 ## Privacy Policy URL
 
-https://github.com/saagpatel/Redact/blob/main/PRIVACY.md
+*https://github.com/saagpatel/Redact/blob/main/PRIVACY.md*
 
 ---
 
