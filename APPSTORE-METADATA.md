@@ -127,3 +127,6 @@ Training mode is active on first launch (shows more visible paragraphs to help n
 - [ ] Support URL and Privacy Policy URL provided
 - [ ] TestFlight internal test complete (5 documents written, revealed, exported)
 - [ ] Submit for Review
+
+## Copyright
+© 2026 saagpatel
