@@ -46,3 +46,47 @@ See IMPLEMENTATION-ROADMAP.md for full phase details, acceptance criteria, and v
 - Do not add features not in the current phase of IMPLEMENTATION-ROADMAP.md
 - Do not enable iCloud or any network entitlements — this app makes zero network calls
 - Do not store document text in UserDefaults — use FileManager JSON files in the app sandbox only
+
+<!-- portfolio-context:start -->
+# Portfolio Context
+
+## What This Project Is
+
+Redact is a premium iPhone writing app that progressively hides completed paragraphs with animated black-bar redactions as you write. Writers work forward-only — no scrolling back, no editing previous paragraphs — then long-press Done to reveal the full document in a cascade animation. The constraint eliminates re-reading and premature editing, forcing a true first-draft mindset. $3.99 one-time, local-only, no cloud, no accounts.
+
+## Current State
+
+**Phase 0: Core Engine**
+See IMPLEMENTATION-ROADMAP.md for full phase details, acceptance criteria, and verification checklist.
+
+## Stack
+
+- Language: Swift 5.9+
+- UI: SwiftUI (app shell, navigation, document list, stats, settings)
+- Text rendering: UIKit / UITextView wrapped in UIViewRepresentable
+- Animation: Core Animation (CAShapeLayer) — GPU-accelerated per-line overlays
+- Text layout: CoreText — line rect calculation for overlay positioning
+- Persistence: FileManager (JSON files in app sandbox)
+- Dependencies: None — zero third-party packages
+- Minimum deployment: iOS 16.0
+- Xcode: 15+
+
+## How To Run
+
+Build and run on simulator or device. Tap **New Session** to start writing — the first paragraph stays visible until you press Return, then it redacts.
+
+## Known Risks
+
+- Do not add third-party Swift Package Manager dependencies — zero external packages
+- Do not implement per-character CALayer overlays — use per-line CAShapeLayer via CoreText line rects
+- Do not use hardcoded UIColor values — use semantic system colors for automatic dark/light adaptation
+- Do not skip Phase 0 engine validation — ParagraphTracker and OverlayRenderer must pass tests and the isolated test harness before any app UI is built
+- Do not add features not in the current phase of IMPLEMENTATION-ROADMAP.md
+- Do not enable iCloud or any network entitlements — this app makes zero network calls
+- Do not store document text in UserDefaults — use FileManager JSON files in the app sandbox only
+
+## Next Recommended Move
+
+Use this context plus the README and supporting docs to resume the next active task, then promote the repo beyond minimum-viable by capturing a dedicated handoff, roadmap, or discovery artifact.
+
+<!-- portfolio-context:end -->
