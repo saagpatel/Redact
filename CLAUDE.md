@@ -22,8 +22,8 @@ Redact is a premium iPhone writing app that progressively hides completed paragr
 - Unit tests for all engine logic (ParagraphTracker, RedactionState, DocumentStore) before Phase 1 UI
 
 ## Current Phase
-**Phase 0: Core Engine**
-See IMPLEMENTATION-ROADMAP.md for full phase details, acceptance criteria, and verification checklist.
+**Phase 4: App Store Submission** (code complete; Phases 0–3 shipped)
+See IMPLEMENTATION-ROADMAP.md for full phase details, acceptance criteria, and submission checklist.
 
 ## Key Decisions
 | Decision | Choice | Rationale |
@@ -56,8 +56,8 @@ Redact is a premium iPhone writing app that progressively hides completed paragr
 
 ## Current State
 
-**Phase 0: Core Engine**
-See IMPLEMENTATION-ROADMAP.md for full phase details, acceptance criteria, and verification checklist.
+**Phase 4: App Store Submission** (code complete; Phases 0–3 shipped)
+See IMPLEMENTATION-ROADMAP.md for full phase details, acceptance criteria, and submission checklist.
 
 ## Stack
 
