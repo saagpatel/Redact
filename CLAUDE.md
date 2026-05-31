@@ -1,9 +1,9 @@
 # Redact
 
 ## Overview
-Redact is a premium iPhone writing app that progressively hides completed paragraphs with animated black-bar redactions as you write. Writers work forward-only — no scrolling back, no editing previous paragraphs — then long-press Done to reveal the full document in a cascade animation. The constraint eliminates re-reading and premature editing, forcing a true first-draft mindset. $3.99 one-time, local-only, no cloud, no accounts.
+Premium iPhone writing app that progressively hides completed paragraphs with animated black-bar redactions. Writers work forward-only — no scrolling back, no editing previous paragraphs — then long-press Done to reveal in a cascade animation. $3.99 one-time, local-only, no cloud, no accounts.
 
-## Tech Stack
+## Stack
 - Language: Swift 5.9+
 - UI: SwiftUI (app shell, navigation, document list, stats, settings)
 - Text rendering: UIKit / UITextView wrapped in UIViewRepresentable
@@ -14,16 +14,27 @@ Redact is a premium iPhone writing app that progressively hides completed paragr
 - Minimum deployment: iOS 16.0
 - Xcode: 15+
 
-## Development Conventions
-- Swift strict concurrency where applicable; `@MainActor` on all store/UI-touching code
-- File naming: PascalCase for types and files, camelCase for properties and methods
-- No hardcoded colors — use `UIColor.label`, `UIColor.systemBackground`, semantic system colors only
-- All FileManager writes are atomic: write to `.tmp`, then `FileManager.replaceItem(at:)`
-- Unit tests for all engine logic (ParagraphTracker, RedactionState, DocumentStore) before Phase 1 UI
+## Build / Test / Run
+Build and run on simulator or device via Xcode. Tap **New Session** to start writing.
 
-## Current Phase
-**Phase 4: App Store Submission** (code complete; Phases 0–3 shipped)
-See IMPLEMENTATION-ROADMAP.md for full phase details, acceptance criteria, and submission checklist.
+Run unit tests via Xcode or:
+```
+xcodebuild test -scheme Redact -destination 'platform=iOS Simulator,name=iPhone 15'
+```
+
+## Conventions
+- Swift strict concurrency; `@MainActor` on all store/UI-touching code
+- File naming: PascalCase for types and files, camelCase for properties and methods
+- Semantic system colors only (`UIColor.label`, `UIColor.systemBackground`) — no hardcoded UIColor values
+- All FileManager writes are atomic: write to `.tmp`, then `FileManager.replaceItem(at:)`
+- Unit tests cover all engine logic (ParagraphTracker, RedactionState, DocumentStore) before Phase 1 UI
+
+## Constraints
+- Zero external packages — use no Swift Package Manager dependencies
+- Redaction rendering: per-line CAShapeLayer via CoreText line rects (not per-character CALayer)
+- Storage: FileManager JSON files in the app sandbox only — not UserDefaults
+- No iCloud entitlement; no network entitlements — this app makes zero network calls
+- Phase gate: implement only features in the current phase of IMPLEMENTATION-ROADMAP.md; validate ParagraphTracker and OverlayRenderer with tests and the isolated test harness before any app UI
 
 ## Key Decisions
 | Decision | Choice | Rationale |
@@ -38,14 +49,7 @@ See IMPLEMENTATION-ROADMAP.md for full phase details, acceptance criteria, and s
 | Pricing | $3.99 one-time, no IAP, no subscription | Signals quality tool, not a gimmick |
 | iCloud | Disabled — no iCloud entitlement | Keeps app simple; avoids requiring iCloud account |
 
-## Do NOT
-- Do not add third-party Swift Package Manager dependencies — zero external packages
-- Do not implement per-character CALayer overlays — use per-line CAShapeLayer via CoreText line rects
-- Do not use hardcoded UIColor values — use semantic system colors for automatic dark/light adaptation
-- Do not skip Phase 0 engine validation — ParagraphTracker and OverlayRenderer must pass tests and the isolated test harness before any app UI is built
-- Do not add features not in the current phase of IMPLEMENTATION-ROADMAP.md
-- Do not enable iCloud or any network entitlements — this app makes zero network calls
-- Do not store document text in UserDefaults — use FileManager JSON files in the app sandbox only
+See IMPLEMENTATION-ROADMAP.md for phases, acceptance criteria, and submission checklist.
 
 <!-- portfolio-context:start -->
 # Portfolio Context
