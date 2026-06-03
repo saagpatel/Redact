@@ -13,79 +13,112 @@ ambiguous.
 ### 1. What it is
 
 **Status:** consistent  
-**Evidence:** `Redact/App/RedactApp.swift` (entry point), `Redact/Views/WriteView.swift` (core writing screen), `Redact/Views/DocumentListView.swift` (home list). README intro accurately describes the progressive-redaction, forward-only writing constraint and the hold-to-reveal mechanic.
+**Evidence:** `Redact/App/RedactApp.swift` is the `@main` entry point; `DocumentListView` is the
+navigation root. README intro accurately describes the progressive-redaction, forward-only writing
+constraint and the hold-to-reveal mechanic. All core modules confirmed present: `WriteView.swift`,
+`RedactTextView.swift`, `OverlayRenderer.swift`, `ParagraphTracker.swift`, `RevealAnimator.swift`.
 
 ---
 
 ### 2. Current state
 
-**Status:** drifted → fixed  
-**Evidence:**
-- `CLAUDE.md:25` claimed "**Phase 0: Core Engine**" as the current phase.
-- `CLAUDE.md:59` (Portfolio Context section) repeated the same Phase 0 claim.
-- Actual file tree contains all Views, Engine, Models, Store, Extensions, and a test harness target matching Phases 0–3 completion: `WriteView.swift`, `DocumentListView.swift`, `EditView.swift`, `SettingsView.swift`, `StatsView.swift`, `NewDocumentSheet.swift`, `RedactTextView.swift`, `WritingSessionTracker.swift`, `VisibilityEngine.swift`, plus 6 XCTest files.
-- `docs/PORTFOLIO-DISPOSITION.md` (uneditable) states "Phases 0-2 complete, Phase 3 next" in one paragraph but "Phases shipped: 0-2 per memory" in the table — both contradict the actual Phase 3-complete state visible in the code.
-- Memory file `project_redact.md` (cross-session context) states Phases 0–3 complete and Phase 4 in progress as of 2026-03-24.
+**Status:** consistent  
+**Evidence:** CLAUDE.md portfolio context (within `<!-- portfolio-context:start -->`) states
+"**Phase 4: App Store Submission** (code complete; Phases 0–3 shipped)". Code confirms all
+Phases 0–3 are implemented: all engine files (`ParagraphTracker`, `OverlayRenderer`,
+`RevealAnimator`, `VisibilityEngine`), all views (`WriteView`, `DocumentListView`, `EditView`,
+`SettingsView`, `StatsView`, `NewDocumentSheet`, `RedactTextView`, `WritingSessionTracker`), all
+models and `DocumentStore`, a `RedactTestHarness` target, six XCTest files, and App Store
+submission artifacts (`APPSTORE-METADATA.md`, `PRIVACY.md`, `PrivacyInfo.xcprivacy`,
+`ExportOptions.plist`).
 
-**Changes made:**
-- `CLAUDE.md:25` — "**Phase 0: Core Engine** / See ... verification checklist." → "**Phase 4: App Store Submission** (code complete; Phases 0–3 shipped) / See ... submission checklist."
-- `CLAUDE.md:59` (Portfolio Context) — same Phase 0 → Phase 4 replacement in the Current State block.
+Note: commit `b926e30` ("lean CLAUDE.md") removed the top-level "## Current Phase" section from
+the CLAUDE.md body but left the portfolio context block intact. The phase claim survives in the
+portfolio context and remains accurate.
 
 ---
 
 ### 3. Stack
 
 **Status:** consistent  
-**Evidence:** `Redact.xcodeproj/project.pbxproj` present (generated via `project.yml` — XcodeGen confirmed). Swift files use SwiftUI entry point (`RedactApp.swift`), UIViewRepresentable wrapping UITextView (`RedactTextView.swift`), CAShapeLayer in `OverlayRenderer.swift`, FileManager JSON persistence in `DocumentStore.swift`. README stack table matches.
+**Evidence:**
+- `project.yml:10` — `SWIFT_VERSION: "5.9"`, `SWIFT_STRICT_CONCURRENCY: complete`
+- `Redact/App/RedactApp.swift` — SwiftUI entry point confirmed
+- `Redact/Engine/OverlayRenderer.swift` — CAShapeLayer, @MainActor, UIKit confirmed
+- `Redact/Store/DocumentStore.swift` — FileManager JSON persistence confirmed
+- `project.yml` — zero SPM `packages:` entries; `RedactTests` target confirmed
+- README Tech Stack table and CLAUDE.md Stack section both match the above
 
 ---
 
 ### 4. How to run
 
 **Status:** consistent  
-**Evidence:** `project.yml` exists at repo root, confirming XcodeGen is the build generator. README Quick Start documents `xcodegen generate && open Redact.xcodeproj` — consistent with project layout. Makefile present (committed at `e0e052f`) with standard build targets.
+**Evidence:** `project.yml` exists at repo root — XcodeGen confirmed as build generator. README
+Quick Start (`xcodegen generate && open Redact.xcodeproj`) is consistent with the project layout.
+CLAUDE.md test command (`xcodebuild test -scheme Redact -destination 'platform=iOS
+Simulator,name=iPhone 15'`) matches the `Redact` scheme with `RedactTests` test target defined in
+`project.yml:42–43`.
 
 ---
 
 ### 5. Known risks / contradictions
 
 **Status:** consistent  
-**Evidence:** README does not overstate features. CLAUDE.md "Do NOT" section correctly reflects zero-dependency, no-iCloud, no-network-calls constraints visible in the code. No contradictions between stated constraints and implemented code found.
+**Evidence:** CLAUDE.md Constraints section and portfolio context Known Risks accurately reflect
+the zero-dependency, no-iCloud, no-network-calls, FileManager-only, per-line CAShapeLayer
+constraints. All confirmed by code inspection. No documentation overstatement found.
 
 ---
 
 ### 6. Next move
 
-**Status:** drifted → fixed (as part of claim 2 above)  
-**Evidence:** IMPLEMENTATION-ROADMAP.md Phase 4 checklist (unsubmitted items: TestFlight testing, screenshots, App Store Connect entry, archive + submit) is consistent with PORTFOLIO-DISPOSITION.md unblock trigger list. The corrected CLAUDE.md phase label now correctly signals Phase 4 as the active work.
+**Status:** consistent  
+**Evidence:** CLAUDE.md directs to IMPLEMENTATION-ROADMAP.md for the Phase 4 checklist. Phase 4
+tasks (screenshots, App Store Connect metadata, TestFlight, archive + submit) are listed in
+IMPLEMENTATION-ROADMAP.md with unchecked boxes, consistent with "submission in progress" posture
+confirmed by the presence of `APPSTORE-METADATA.md`, `ExportOptions.plist`, and
+`PrivacyInfo.xcprivacy` but absence of a submitted/approved state.
 
 ---
 
 ## Contradictions for Manual Review
 
-These files contain drift but are outside the editable set (not `README.md`, `CLAUDE.md`, `AGENTS.md`, `DOC-RECONCILIATION.md`, or `docs/`). A human should make these corrections.
+These files contain drift but are outside the editable set (not `README.md`, `CLAUDE.md`,
+`AGENTS.md`, `DOC-RECONCILIATION.md`, or `docs/`). A human should make these corrections.
 
 ### `docs/PORTFOLIO-DISPOSITION.md`
 
+These items were flagged in the prior reconciliation pass (2026-05-30) and remain unresolved.
+
 | Location | What is wrong | One-line fix |
 |---|---|---|
-| "Current state in one paragraph" paragraph | "Per memory: Phases 0-2 complete, Phase 3 next." | Change to: "Per memory: Phases 0-3 complete, Phase 4 (App Store submission) in progress." |
-| "Last known reference" table, row "Phases shipped" | "0-2 per memory; Phase 3 was next item" | Change to: "0-3 per memory; Phase 4 (App Store submission) in progress" |
+| Line 65 — "Current state in one paragraph" | "Per memory: Phases 0-2 complete, Phase 3 next." | Change to: "Per memory: Phases 0-3 complete, Phase 4 (App Store submission) in progress." |
+| Line 145 — Resurface conditions row | "(c) Phase 3 scope packet (per memory: Phase 3 was the next item)" | Change to: "(c) Phase 4 submission completion, or review feedback" |
+| Line 177 — Last known reference table, "Phases shipped" row | "0-2 per memory; Phase 3 was next item" | Change to: "0-3 per memory; Phase 4 (App Store submission) in progress" |
+| Line 30 — "origin/main tip" | Sha `d32f10a` is stale; two commits landed since (`75aa81a`, `b926e30`) | Update tip sha to `b926e30` |
 
 ### `IMPLEMENTATION-ROADMAP.md`
 
-The roadmap is a planning document; these are architectural decisions that evolved during implementation. They do not affect user-facing docs but may confuse a future developer reading the roadmap alongside the code.
+These are architectural decisions that evolved during implementation; the roadmap's File Structure
+listing no longer matches the actual file tree.
 
 | Location | What is wrong | One-line fix |
 |---|---|---|
-| File Structure → Views, line listing `RevealView.swift` | File does not exist; reveal logic was integrated directly into `WriteView.swift` as `WritePhase` enum (`.revealing`/`.stats` states). | Remove `RevealView.swift` from the file structure listing; add a note that reveal is handled via `WritePhase` in `WriteView.swift`. |
-| File Structure → Extensions, line listing `UITextView+ParagraphRects.swift` | File does not exist in the repository. | Remove the line; the CoreText rect helpers are implemented inline within `RedactTextView.swift`/`OverlayRenderer.swift`. |
-| File Structure → RedactTests, line listing `OverlayRendererTests.swift` | File does not exist; overlay rendering is tested indirectly via `VisibilityEngineTests.swift`. | Replace `OverlayRendererTests.swift` with `VisibilityEngineTests.swift` and `WritingSessionTrackerTests.swift` (both present). |
+| File Structure → Views, `RevealView.swift` line | File does not exist; reveal logic is handled via `WritePhase` enum (`.revealing`/`.stats`) in `WriteView.swift` | Remove `RevealView.swift` line; note reveal is a `WritePhase` in `WriteView.swift` |
+| File Structure → Extensions, `UITextView+ParagraphRects.swift` line | File does not exist; CoreText rect helpers are inline in `OverlayRenderer.swift` | Remove the line |
+| File Structure → RedactTests, `OverlayRendererTests.swift` line | File does not exist | Replace with `VisibilityEngineTests.swift` and `WritingSessionTrackerTests.swift` (both present at `RedactTests/`) |
+
+### `Makefile`
+
+| Location | What is wrong | One-line fix |
+|---|---|---|
+| Lines 4–12 — `build`, `test`, `run` targets | Use `swift build`/`swift test`/`swift run` (SPM commands); no `Package.swift` exists — this is an Xcode/XcodeGen project. These targets will fail. README and CLAUDE.md correctly use `xcodebuild`. | Replace body with `xcodebuild` equivalents, or remove the misleading targets |
 
 ---
 
 ## Footer
 
-**Generated:** 2026-05-30 20:00:42 PDT  
-**Branch:** docs/truth-up-2026-05-30  
-**HEAD sha reconciled against:** 6c3da09b0d93ed35c559fe7e03fe87e71f513d32
+**Generated:** 2026-06-02 19:39:41 PDT  
+**Branch:** docs/truth-up-2026-06-02  
+**HEAD sha reconciled against:** b926e300b3cabf8d1dad85cb06521f96531ee6a8
