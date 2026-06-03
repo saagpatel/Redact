@@ -94,3 +94,8 @@ Build and run on simulator or device. Tap **New Session** to start writing — t
 Use this context plus the README and supporting docs to resume the next active task, then promote the repo beyond minimum-viable by capturing a dedicated handoff, roadmap, or discovery artifact.
 
 <!-- portfolio-context:end -->
+
+<!-- secondbrain-breadcrumb -->
+## SecondBrain knowledge vault
+
+Prior lessons, decisions, and context for this project live in SecondBrain at `wiki/maps/projects/redact.md`. The whole vault is searchable via the `engraph` MCP — query it for this project + its stack before non-trivial work.
