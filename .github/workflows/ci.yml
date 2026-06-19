@@ -17,4 +17,6 @@ jobs:
           xcodebuild build \
             -scheme Redact \
             -project Redact.xcodeproj \
-            -destination 'generic/platform=iOS'
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO
