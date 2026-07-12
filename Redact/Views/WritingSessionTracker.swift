@@ -3,7 +3,7 @@ import Foundation
 @MainActor
 final class WritingSessionTracker: ObservableObject {
 
-    private let dateProvider: @Sendable () -> Date
+    private let dateProvider: () -> Date
     private let pauseThreshold: TimeInterval = 30
 
     private(set) var sessionStartDate: Date?
@@ -11,7 +11,7 @@ final class WritingSessionTracker: ObservableObject {
     private var currentStreakStart: Date?
     private(set) var longestStreakSeconds: TimeInterval = 0
 
-    init(dateProvider: @escaping @Sendable () -> Date = { Date() }) {
+    init(dateProvider: @escaping () -> Date = { Date() }) {
         self.dateProvider = dateProvider
     }
 

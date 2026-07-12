@@ -15,7 +15,7 @@ final class WritingSessionTrackerTests: XCTestCase {
     }
 
     func testSingleKeystrokeProducesZeroDuration() {
-        var currentTime = Date()
+        let currentTime = Date()
         let tracker = WritingSessionTracker(dateProvider: { currentTime })
         tracker.recordKeystroke()
         let stats = tracker.computeStats(wordCount: 1, paragraphCount: 1)

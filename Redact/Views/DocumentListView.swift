@@ -22,6 +22,7 @@ struct DocumentListView: View {
     @State private var showNewDocumentSheet = false
     @State private var showDeleteConfirmation = false
     @State private var documentToDelete: Document?
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -70,6 +71,11 @@ struct DocumentListView: View {
                 } message: { doc in
                     Text("'\(doc.title)' will be permanently deleted.")
                 }
+                .alert("Redact Couldn't Complete That Action", isPresented: errorIsPresented) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text(errorMessage ?? "Unknown error")
+                }
                 .onAppear { refresh() }
                 .onChange(of: path) { newPath in
                     if newPath.isEmpty {
@@ -100,6 +106,12 @@ struct DocumentListView: View {
             } label: {
                 Image(systemName: "plus")
             }
+            .disabled(inProgressDocument != nil)
+            .accessibilityHint(
+                inProgressDocument == nil
+                    ? "Starts a forward-only writing session"
+                    : "Finish the current writing session before starting another"
+            )
         }
     }
 
@@ -110,19 +122,18 @@ struct DocumentListView: View {
         if documents.isEmpty && inProgressDocument == nil {
             emptyState
         } else {
-            ScrollView {
-                VStack(spacing: 0) {
-                    if inProgressDocument != nil {
+            List {
+                if inProgressDocument != nil {
+                    Section("In Progress") {
                         inProgressCard
-                            .padding(.top, 16)
-                            .padding(.bottom, 8)
-                    }
-
-                    if !documents.isEmpty {
-                        completedList
                     }
                 }
+
+                if !documents.isEmpty {
+                    completedList
+                }
             }
+            .listStyle(.insetGrouped)
         }
     }
 
@@ -174,17 +185,15 @@ struct DocumentListView: View {
                         .foregroundColor(.secondary)
                 }
             }
-            .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
-            .padding(.horizontal)
         }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Completed List
 
     private var completedList: some View {
-        List {
+        Section("Completed") {
             ForEach(documents) { doc in
                 Button {
                     path.append(.edit(doc.id))
@@ -218,8 +227,6 @@ struct DocumentListView: View {
                 }
             }
         }
-        .listStyle(.plain)
-        .frame(minHeight: 200)
     }
 
     // MARK: - Helpers
@@ -229,8 +236,15 @@ struct DocumentListView: View {
             documents = try store.loadAll()
             inProgressDocument = try store.loadInProgress()
         } catch {
-            print("Refresh failed: \(error)")
+            errorMessage = "Your saved writing could not be read. Redact left the files untouched. \(error.localizedDescription)"
         }
+    }
+
+    private var errorIsPresented: Binding<Bool> {
+        Binding(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )
     }
 
     private func formatDuration(_ seconds: TimeInterval) -> String {

@@ -15,6 +15,7 @@ struct EditView: View {
     @State private var exportFileURL: URL?
     @State private var autoSaveTask: Task<Void, Never>?
     @State private var copyConfirmation = false
+    @State private var exportErrorMessage: String?
 
     var body: some View {
         Group {
@@ -41,6 +42,16 @@ struct EditView: View {
                         if let url = exportFileURL {
                             DocumentExportPicker(fileURL: url)
                         }
+                    }
+                    .alert("Copied", isPresented: $copyConfirmation) {
+                        Button("OK", role: .cancel) {}
+                    } message: {
+                        Text("The document text is on the clipboard.")
+                    }
+                    .alert("Export Failed", isPresented: exportErrorIsPresented) {
+                        Button("OK", role: .cancel) {}
+                    } message: {
+                        Text(exportErrorMessage ?? "Unknown error")
                     }
                     .onChange(of: scenePhase) { newPhase in
                         if newPhase == .background || newPhase == .inactive {
@@ -141,16 +152,20 @@ struct EditView: View {
 
     private func exportAsTxt() {
         guard let doc = document else { return }
-        let filename = "\(doc.title).txt"
+        let filename = "\(safeFilename(for: doc.title)).txt"
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        try? doc.rawText.write(to: tempURL, atomically: true, encoding: .utf8)
-        exportFileURL = tempURL
-        showDocumentPicker = true
+        do {
+            try doc.rawText.write(to: tempURL, atomically: true, encoding: .utf8)
+            exportFileURL = tempURL
+            showDocumentPicker = true
+        } catch {
+            exportErrorMessage = error.localizedDescription
+        }
     }
 
     private func exportAsMarkdown() {
         guard let doc = document else { return }
-        let filename = "\(doc.title).md"
+        let filename = "\(safeFilename(for: doc.title)).md"
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
 
         let dateFormatter = ISO8601DateFormatter()
@@ -159,7 +174,7 @@ struct EditView: View {
 
         let content = """
         ---
-        title: \(doc.title)
+        title: "\(doc.title.replacingOccurrences(of: "\"", with: "\\\""))"
         date: \(date)
         wordCount: \(doc.rawText.wordCount)
         wpm: \(wpm)
@@ -167,9 +182,27 @@ struct EditView: View {
         \(doc.rawText)
         """
 
-        try? content.write(to: tempURL, atomically: true, encoding: .utf8)
-        exportFileURL = tempURL
-        showDocumentPicker = true
+        do {
+            try content.write(to: tempURL, atomically: true, encoding: .utf8)
+            exportFileURL = tempURL
+            showDocumentPicker = true
+        } catch {
+            exportErrorMessage = error.localizedDescription
+        }
+    }
+
+    private func safeFilename(for title: String) -> String {
+        let invalid = CharacterSet(charactersIn: "/\\:?%*|\"<>")
+        let sanitized = title.components(separatedBy: invalid).joined(separator: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return String((sanitized.isEmpty ? "Redact Export" : sanitized).prefix(80))
+    }
+
+    private var exportErrorIsPresented: Binding<Bool> {
+        Binding(
+            get: { exportErrorMessage != nil },
+            set: { if !$0 { exportErrorMessage = nil } }
+        )
     }
 }
 

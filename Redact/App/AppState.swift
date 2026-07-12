@@ -30,7 +30,7 @@ final class AppState: ObservableObject {
         do {
             let data = try encoder.encode(settings)
             let tmpURL = fileURL.appendingPathExtension("tmp")
-            try data.write(to: tmpURL, options: .atomic)
+            try data.write(to: tmpURL, options: [.atomic, .completeFileProtection])
 
             if fileManager.fileExists(atPath: fileURL.path) {
                 _ = try fileManager.replaceItemAt(fileURL, withItemAt: tmpURL)

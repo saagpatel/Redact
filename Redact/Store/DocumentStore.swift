@@ -60,11 +60,11 @@ final class DocumentStore {
             options: .skipsHiddenFiles
         )
 
-        let documents: [Document] = contents
+        let documents: [Document] = try contents
             .filter { $0.pathExtension == "json" }
-            .compactMap { url in
-                guard let data = try? Data(contentsOf: url) else { return nil }
-                return try? decoder.decode(Document.self, from: data)
+            .map { url in
+                let data = try Data(contentsOf: url)
+                return try decoder.decode(Document.self, from: data)
             }
 
         return documents.sorted { lhs, rhs in
@@ -119,7 +119,7 @@ final class DocumentStore {
     private func atomicWrite(_ document: Document, to destinationURL: URL) throws {
         let data = try encoder.encode(document)
         let tmpURL = destinationURL.appendingPathExtension("tmp")
-        try data.write(to: tmpURL, options: .atomic)
+        try data.write(to: tmpURL, options: [.atomic, .completeFileProtection])
 
         if fileManager.fileExists(atPath: destinationURL.path) {
             _ = try fileManager.replaceItemAt(destinationURL, withItemAt: tmpURL)

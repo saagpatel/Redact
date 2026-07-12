@@ -4,7 +4,7 @@
 
 > Write without looking back.
 
-Redact is an iOS writing app built around a single constraint: as you finish each paragraph, it disappears behind a black bar. You cannot scroll back. You cannot edit what you've written. You can only move forward. When you're done, hold the Done button and watch your entire document reveal itself — read as a reader, not as the writer who second-guessed every sentence.
+Redact is an iOS writing app built around a single constraint: as you finish each paragraph, it disappears behind a black bar. You cannot revisit or edit the hidden text. You can only move forward. When you're done, hold the Done button and watch your entire document reveal itself — read as a reader, not as the writer who second-guessed every sentence.
 
 ## Features
 
