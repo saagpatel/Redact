@@ -30,7 +30,7 @@ writing,journal,focus,distraction-free,drafting,freewrite,first draft,prose,crea
 
 Re-reading while you write kills momentum. Every writer knows it. Most writing apps make it worse — infinite scroll, visible history, the pull of the cursor backwards.
 
-Redact is different. As you write, completed paragraphs are progressively hidden behind black bars. You can't scroll back. You can't edit what you've written. You can only move forward. The constraint is the point.
+Redact is different. As you write, completed paragraphs are progressively hidden behind black bars. You can't revisit or edit the hidden text. You can only move forward. The constraint is the point.
 
 When you're done, hold the Done button. Watch your full document cascade back into view — this time as a reader, not as the writer second-guessing every sentence. That moment of rediscovery is what first drafts are supposed to feel like.
 
@@ -43,7 +43,7 @@ When you're done, hold the Done button. Watch your full document cascade back in
 • Full document editing and export after reveal
 • Export as plain text, Markdown (with YAML front matter), or share
 • Session persistence — force-quit and come back exactly where you left off
-• No account. No cloud. No subscription. Your writing stays on your device.
+• No account, no app-operated cloud sync, and no subscription. Your writing stays in Redact unless you export it.
 
 $3.99, once. That's it.
 

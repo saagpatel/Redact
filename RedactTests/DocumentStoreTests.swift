@@ -142,6 +142,15 @@ final class DocumentStoreTests: XCTestCase {
         XCTAssertTrue(result.isEmpty)
     }
 
+    func testLoadAllReportsCorruptDocumentInsteadOfSilentlyDroppingIt() throws {
+        let documentsDirectory = tempDir.appendingPathComponent("documents", isDirectory: true)
+        try Data("not-json".utf8).write(
+            to: documentsDirectory.appendingPathComponent("corrupt.json")
+        )
+
+        XCTAssertThrowsError(try store.loadAll())
+    }
+
     // MARK: - Session restore simulation
 
     func testSessionRestoreSimulation() throws {
