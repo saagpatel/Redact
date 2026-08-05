@@ -25,12 +25,15 @@ targets:
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: true
         INFOPLIST_KEY_UILaunchScreen_Generation: true
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         GENERATE_INFOPLIST_FILE: true
         PRODUCT_BUNDLE_IDENTIFIER: com.redact.app
         DEVELOPMENT_TEAM: 3TGZFKFNA4
         CODE_SIGN_STYLE: Automatic
         PRODUCT_NAME: Redact
+        # iPhone only. The writing surface is a single portrait column sized for a
+        # thumb-reachable keyboard; it has no iPad layout, so shipping to iPad would
+        # ship a stretched phone app.
+        TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
