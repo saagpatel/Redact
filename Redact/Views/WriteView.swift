@@ -200,6 +200,16 @@ struct WriteView: View {
     // MARK: - Handlers
 
     private func handleOnAppear() {
+        // A document opened with text already in it is a session resumed from an earlier
+        // launch. Hand the tracker the dates the document carries so the stats report the
+        // whole writing session rather than only the part after the app restarted.
+        if !document.rawText.isEmpty {
+            sessionTracker.resume(
+                startedAt: document.createdAt,
+                lastActivityAt: document.lastModifiedAt
+            )
+        }
+
         if !appState.settings.hasCompletedFirstDocument && appState.settings.trainingModeEnabled {
             showTrainingBanner = true
             trainingBannerDismissTask = Task {

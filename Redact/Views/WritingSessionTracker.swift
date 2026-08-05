@@ -61,6 +61,24 @@ final class WritingSessionTracker: ObservableObject {
         )
     }
 
+    /// Adopts the timing of a session that began in an earlier launch.
+    ///
+    /// The tracker starts empty on every launch and only begins timing at the first
+    /// keystroke, so a document reopened after a force-quit reported a duration of zero
+    /// — and with it a WPM of zero — no matter how long it actually took to write. The
+    /// document already persists both dates; this is the seam that puts them back.
+    ///
+    /// Deliberately does nothing once a session is under way, so returning to a
+    /// document mid-session cannot rewind its own start.
+    func resume(startedAt: Date, lastActivityAt: Date) {
+        guard sessionStartDate == nil else { return }
+        guard lastActivityAt >= startedAt else { return }
+
+        sessionStartDate = startedAt
+        lastKeystrokeDate = lastActivityAt
+        currentStreakStart = lastActivityAt
+    }
+
     func reset() {
         sessionStartDate = nil
         lastKeystrokeDate = nil

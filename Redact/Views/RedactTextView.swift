@@ -32,6 +32,14 @@ struct RedactTextView: UIViewRepresentable {
         textView.textContainerInset = UIEdgeInsets(top: 16, left: 24, bottom: 16, right: 24)
         textView.textContainer.lineFragmentPadding = 0
 
+        // Without this a restored document renders as a single unwrapped line running off
+        // both edges of the screen. A non-scrolling UITextView sizes itself to its content,
+        // and restore assigns text below before SwiftUI has given the view a width — so it
+        // computes an intrinsic width of one very long line and then defends it. Lowering
+        // horizontal compression resistance lets the parent's width win, and the text wraps.
+        // A new document never hit this because its text is empty at this point.
+        textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
         // Appearance
         textView.backgroundColor = .clear
         textView.textColor = .label
