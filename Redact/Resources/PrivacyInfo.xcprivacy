@@ -13,13 +13,19 @@
 		<dict>
 			<key>NSPrivacyAccessedAPIType</key>
 			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
-			<!-- 3B52.1: timestamps of files inside the app's own container. DocumentStore
-			     reads contentModificationDate to sort the document list. Not C617.1, which
-			     is for displaying file timestamps to the user — the dates shown in the UI
-			     come from the document JSON, never from the filesystem. -->
+			<!-- C617.1: timestamps of files inside the app container. DocumentStore.loadInProgress()
+			     reads contentModificationDate via resourceValues while enumerating JSON files under
+			     Documents/documents/in-progress, to pick the most recently modified draft.
+			     Not 3B52.1: that reason covers files the user specifically granted access to, such as
+			     through a document picker. The only picker here is EditView's
+			     UIDocumentPickerViewController(forExporting:), which hands a file out rather than
+			     granting access in, and no timestamp read touches a picker-returned URL. Every
+			     contentModificationDate read is under DocumentStore's base .documentDirectory.
+			     Not DDA9.1: that reason covers displaying file timestamps to the user. The dates shown
+			     in the UI come from the document JSON, never from the filesystem. -->
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
-				<string>3B52.1</string>
+				<string>C617.1</string>
 			</array>
 		</dict>
 	</array>
