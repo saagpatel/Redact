@@ -84,12 +84,54 @@ screenshots are required or accepted.
 
 ### Screenshot Plan (4 screenshots)
 
-| # | Screen | Simulator State | Headline Overlay |
-|---|--------|-----------------|------------------|
-| 1 | WriteView | 3 paragraphs: first 2 fully redacted (black bars), 3rd partially visible, cursor active in 4th | "Write without looking back." |
-| 2 | WriteView mid-reveal | Overlay layers partially faded — text beginning to appear behind dissolving black bars | "Then see everything at once." |
-| 3 | StatsView | Stats card visible: e.g. 247 words, 3 paragraphs, 14m 32s, 82 WPM | "Discover what you actually wrote." |
-| 4 | DocumentListView | 3 completed documents listed with titles + metadata | "Every first draft. Saved." |
+Captured and committed under `screenshots/iphone-69/`. Each entry records what is
+actually on screen in the committed PNG, not an intended state — the overlay copy
+below is written against those pixels.
+
+Overlay copy is for conversion, not search. App Store indexes the app name,
+subtitle, and keywords field; it does not index screenshot text. Write these to
+stop the scroll and explain the mechanic, not to repeat keywords.
+
+**1 — `01-writing.png` · WriteView, mid-session**
+On screen: 4 paragraphs. The first two are solid black bars, the third is
+partially masked, the fourth is fully legible and being typed. Header reads
+"135 words" with the Done button live. Bottom half is empty.
+> **You can't reread it.**
+> That's the entire point.
+
+**2 — `02-reveal.png` · WriteView, mid-reveal**
+On screen: the same document with the bars dissolving. The first two paragraphs
+have returned in full, the third is halfway out from under grey and black runs.
+Done has left the header. Bottom half is empty.
+> **Hold Done. It all comes back.**
+> Your draft returns in one cascade.
+
+**3 — `03-stats.png` · StatsView**
+On screen: the fully revealed document with the Writing Complete card docked at
+the bottom — 135 Words, 4 Paragraphs, 6m 7s, 22 WPM — plus Start Editing and
+Share. The card occupies the lower third.
+> **135 words. Zero second-guessing.**
+> Words, pace, time. Every session.
+
+**4 — `04-library.png` · DocumentListView**
+On screen: the Redact title, an In Progress card ("Continue Writing", 135 words),
+and three Completed documents with word counts, dates, and durations. Bottom 40%
+is empty.
+> **Every first draft, kept.**
+> On your phone. No account, no cloud.
+
+### Overlay Composition
+
+- Screenshots 1, 2, and 4 have empty space below the content — anchor the overlay
+  to the bottom. Screenshot 3's stats card fills the lower third, so its overlay
+  goes above the text block, under the status bar.
+- Keep overlays clear of the top 120 px (status bar) and the bottom 90 px (home
+  indicator) at 1320 × 2868.
+- Headline in the app's serif at a weight that reads at thumbnail size; subhead
+  one step down in grey. The screenshots are near-monochrome, so the overlay
+  needs contrast from size and weight, not colour.
+- Composite into copies. Never overwrite the raw PNGs in `screenshots/iphone-69/`
+  — those are the reproducible output of `scripts/capture-screenshots.sh`.
 
 ### How to Take Screenshots
 
