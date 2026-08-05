@@ -13,11 +13,15 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
       - name: Test
+        # No OS= in the destination. Pinning it to a specific runtime made the job
+        # fail with "Unable to find a device matching the provided destination
+        # specifier" whenever the macos-latest image shipped a different iOS SDK.
+        # Without it, xcodebuild picks whatever runtime the image has for this device.
         run: |
           xcodebuild test \
             -scheme Redact \
             -project Redact.xcodeproj \
-            -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' \
+            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             CODE_SIGNING_ALLOWED=NO
       - name: Release build
         run: |
