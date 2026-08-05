@@ -110,7 +110,7 @@ final class OverlayRenderer: OverlayRendering {
             guard let textView else { return }
             // Convert line glyph range to character range
             let lineCharRange = layoutManager.characterRange(forGlyphRange: lineGlyphRange, actualGlyphRange: nil)
-            var lineGlyphRects: [CGRect] = []
+            var lineGlyphRects: [(charIndex: Int, rect: CGRect)] = []
 
             let lineCharStart = lineCharRange.location
             let lineCharEnd = lineCharRange.location + lineCharRange.length
@@ -118,7 +118,7 @@ final class OverlayRenderer: OverlayRendering {
             // Iterate characters in this line that belong to the paragraph
             for absCharIndex in lineCharStart..<lineCharEnd {
                 let relCharIndex = absCharIndex - paragraphRange.location
-                guard relCharIndex >= 0, relCharIndex < min(100, paragraphLength) else { continue }
+                guard relCharIndex >= 0, relCharIndex < paragraphLength else { continue }
 
                 // Skip if this character is in the visible set (should NOT be masked)
                 if visibleSet.contains(relCharIndex) { continue }
@@ -146,12 +146,13 @@ final class OverlayRenderer: OverlayRendering {
                 )
 
                 if !converted.isEmpty && converted.width > 0 {
-                    lineGlyphRects.append(converted)
+                    lineGlyphRects.append((relCharIndex, converted))
                 }
             }
 
-            if !lineGlyphRects.isEmpty {
-                lineGroups.append(lineGlyphRects)
+            let merged = Self.mergeContiguousRects(lineGlyphRects)
+            if !merged.isEmpty {
+                lineGroups.append(merged)
             }
         }
 
@@ -273,6 +274,36 @@ final class OverlayRenderer: OverlayRendering {
         }
 
         return rects
+    }
+
+    /// Collapses runs of adjacent masked characters into single rects.
+    ///
+    /// Masking each glyph with its own layer makes layer count grow with paragraph length —
+    /// the per-character layer explosion the architecture explicitly rules out. Adjacent
+    /// masked characters share a line and a baseline, so one rect spanning the run renders
+    /// identically for a fraction of the layers, and reads as a redaction bar rather than a
+    /// row of slivers.
+    ///
+    /// Input must be ordered by character index, as produced by the glyph walk above.
+    static func mergeContiguousRects(_ glyphs: [(charIndex: Int, rect: CGRect)]) -> [CGRect] {
+        guard let first = glyphs.first else { return [] }
+
+        var merged: [CGRect] = []
+        var previousCharIndex = first.charIndex
+        var runRect = first.rect
+
+        for glyph in glyphs.dropFirst() {
+            if glyph.charIndex == previousCharIndex + 1 {
+                runRect = runRect.union(glyph.rect)
+            } else {
+                merged.append(runRect)
+                runRect = glyph.rect
+            }
+            previousCharIndex = glyph.charIndex
+        }
+        merged.append(runRect)
+
+        return merged
     }
 
     private func addAccessibilityView(for paragraphIndex: Int, lineRects: [CGRect], in textView: UITextView) {

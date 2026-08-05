@@ -173,7 +173,7 @@ struct RedactTextView: UIViewRepresentable {
             // Compute new visibility
             let previousVisibility = parent.redactionState.paragraphs
             let newVisibility = visibilityEngine.computeVisibility(
-                paragraphCount: currentRanges.count,
+                paragraphLengths: currentRanges.map(\.length),
                 activeParagraphIndex: activeIndex,
                 fullVisible: parent.visibilityFullParagraphs,
                 partialVisible: parent.visibilityPartialParagraphs,

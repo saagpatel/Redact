@@ -6,11 +6,17 @@ final class VisibilityEngineTests: XCTestCase {
     private let engine = VisibilityEngine()
     private let seed = UUID(uuidString: "DEADBEEF-1234-5678-ABCD-000000000000")!
 
+    /// Pinned output of `computePartialIndices` for `seed`, paragraph 0, length 24.
+    /// Captured from the deterministic implementation and asserted verbatim so any
+    /// future change to the seeding algorithm fails loudly instead of silently
+    /// reshuffling every user's document.
+    private static let goldenIndicesForFixedSeed = [1, 2, 3, 7, 8, 13, 16, 18, 20]
+
     // MARK: - Zero paragraphs
 
     func testZeroParagraphsReturnsEmpty() {
         let result = engine.computeVisibility(
-            paragraphCount: 0,
+            paragraphLengths: Array(repeating: 120, count: 0),
             activeParagraphIndex: 0,
             fullVisible: 1,
             partialVisible: 1,
@@ -23,7 +29,7 @@ final class VisibilityEngineTests: XCTestCase {
 
     func testSingleParagraphActiveZeroIsVisible() {
         let result = engine.computeVisibility(
-            paragraphCount: 1,
+            paragraphLengths: Array(repeating: 120, count: 1),
             activeParagraphIndex: 0,
             fullVisible: 1,
             partialVisible: 1,
@@ -38,7 +44,7 @@ final class VisibilityEngineTests: XCTestCase {
 
     func testThreeParagraphsF1P1Active2() {
         let result = engine.computeVisibility(
-            paragraphCount: 3,
+            paragraphLengths: Array(repeating: 120, count: 3),
             activeParagraphIndex: 2,
             fullVisible: 1,
             partialVisible: 1,
@@ -54,7 +60,7 @@ final class VisibilityEngineTests: XCTestCase {
 
     func testFiveParagraphsF1P1Active4() {
         let result = engine.computeVisibility(
-            paragraphCount: 5,
+            paragraphLengths: Array(repeating: 120, count: 5),
             activeParagraphIndex: 4,
             fullVisible: 1,
             partialVisible: 1,
@@ -72,7 +78,7 @@ final class VisibilityEngineTests: XCTestCase {
 
     func testTrainingModeEightParagraphsF4P2Active7() {
         let result = engine.computeVisibility(
-            paragraphCount: 8,
+            paragraphLengths: Array(repeating: 120, count: 8),
             activeParagraphIndex: 7,
             fullVisible: 4,
             partialVisible: 2,
@@ -94,7 +100,7 @@ final class VisibilityEngineTests: XCTestCase {
 
     func testTrainingModeF4P2FourParagraphsActive3AllVisible() {
         let result = engine.computeVisibility(
-            paragraphCount: 4,
+            paragraphLengths: Array(repeating: 120, count: 4),
             activeParagraphIndex: 3,
             fullVisible: 4,
             partialVisible: 2,
@@ -113,7 +119,7 @@ final class VisibilityEngineTests: XCTestCase {
 
     func testCustomF3P2EightParagraphsActive7() {
         let result = engine.computeVisibility(
-            paragraphCount: 8,
+            paragraphLengths: Array(repeating: 120, count: 8),
             activeParagraphIndex: 7,
             fullVisible: 3,
             partialVisible: 2,
@@ -135,7 +141,7 @@ final class VisibilityEngineTests: XCTestCase {
 
     func testActiveZeroWithLargeFullWindowNoCrash() {
         let result = engine.computeVisibility(
-            paragraphCount: 5,
+            paragraphLengths: Array(repeating: 120, count: 5),
             activeParagraphIndex: 0,
             fullVisible: 3,
             partialVisible: 2,
@@ -155,7 +161,7 @@ final class VisibilityEngineTests: XCTestCase {
 
     func testTwoParagraphsF1P1Active1() {
         let result = engine.computeVisibility(
-            paragraphCount: 2,
+            paragraphLengths: Array(repeating: 120, count: 2),
             activeParagraphIndex: 1,
             fullVisible: 1,
             partialVisible: 1,
@@ -170,7 +176,7 @@ final class VisibilityEngineTests: XCTestCase {
 
     func testZeroPartialWindowF1P0FourParagraphsActive3() {
         let result = engine.computeVisibility(
-            paragraphCount: 4,
+            paragraphLengths: Array(repeating: 120, count: 4),
             activeParagraphIndex: 3,
             fullVisible: 1,
             partialVisible: 0,
@@ -188,7 +194,7 @@ final class VisibilityEngineTests: XCTestCase {
 
     func testPartialParagraphsHaveNonEmptyIndices() {
         let result = engine.computeVisibility(
-            paragraphCount: 3,
+            paragraphLengths: Array(repeating: 120, count: 3),
             activeParagraphIndex: 2,
             fullVisible: 1,
             partialVisible: 1,
@@ -203,14 +209,14 @@ final class VisibilityEngineTests: XCTestCase {
 
     func testPartialIndicesAreDeterministicWithSameSeed() {
         let result1 = engine.computeVisibility(
-            paragraphCount: 3,
+            paragraphLengths: Array(repeating: 120, count: 3),
             activeParagraphIndex: 2,
             fullVisible: 1,
             partialVisible: 1,
             documentSeed: seed
         )
         let result2 = engine.computeVisibility(
-            paragraphCount: 3,
+            paragraphLengths: Array(repeating: 120, count: 3),
             activeParagraphIndex: 2,
             fullVisible: 1,
             partialVisible: 1,
@@ -222,14 +228,14 @@ final class VisibilityEngineTests: XCTestCase {
     func testPartialIndicesDifferWithDifferentSeeds() {
         let seed2 = UUID()
         let result1 = engine.computeVisibility(
-            paragraphCount: 3,
+            paragraphLengths: Array(repeating: 120, count: 3),
             activeParagraphIndex: 2,
             fullVisible: 1,
             partialVisible: 1,
             documentSeed: seed
         )
         let result2 = engine.computeVisibility(
-            paragraphCount: 3,
+            paragraphLengths: Array(repeating: 120, count: 3),
             activeParagraphIndex: 2,
             fullVisible: 1,
             partialVisible: 1,
@@ -243,7 +249,7 @@ final class VisibilityEngineTests: XCTestCase {
 
     func testParagraphIndicesMatchPosition() {
         let result = engine.computeVisibility(
-            paragraphCount: 5,
+            paragraphLengths: Array(repeating: 120, count: 5),
             activeParagraphIndex: 4,
             fullVisible: 1,
             partialVisible: 1,
@@ -343,5 +349,90 @@ final class VisibilityEngineTests: XCTestCase {
         XCTAssertEqual(changes[0].index, 1)
         XCTAssertEqual(changes[0].from, .visible)
         XCTAssertEqual(changes[0].to, .partial)
+    }
+
+    // MARK: - Partial indices: coverage
+
+    /// Returns the `partiallyVisibleIndices` of the single partial paragraph in a
+    /// two-paragraph document whose partial paragraph has the given length.
+    private func partialIndices(paragraphLength: Int, seed: UUID? = nil) -> [Int] {
+        let result = engine.computeVisibility(
+            paragraphLengths: [paragraphLength, 40],
+            activeParagraphIndex: 1,
+            fullVisible: 1,
+            partialVisible: 1,
+            documentSeed: seed ?? self.seed
+        )
+        XCTAssertEqual(result[0].visibility, .partial, "paragraph 0 should be the partial one")
+        return result[0].partiallyVisibleIndices
+    }
+
+    func testPartialIndicesStayWithinParagraphBounds() {
+        let indices = partialIndices(paragraphLength: 40)
+        XCTAssertFalse(indices.isEmpty)
+        XCTAssertTrue(indices.allSatisfy { $0 >= 0 && $0 < 40 },
+                      "indices must address real characters; got max \(indices.max() ?? -1) for length 40")
+    }
+
+    func testPartialIndicesCoverWholeParagraphNotJustFirstHundredChars() {
+        // A 400-character paragraph is normal prose. If masking stops at character 100,
+        // the remaining 300 characters render fully readable and the forward-only
+        // constraint is defeated for that paragraph.
+        let indices = partialIndices(paragraphLength: 400)
+        XCTAssertGreaterThan(indices.max() ?? 0, 100,
+                             "partial masking must extend past character 100")
+        XCTAssertTrue(indices.contains { $0 >= 300 },
+                      "partial masking must reach the tail of a 400-character paragraph")
+    }
+
+    func testPartialIndicesSelectRoughlyHalfTheCharacters() {
+        let length = 1000
+        let indices = partialIndices(paragraphLength: length)
+        let ratio = Double(indices.count) / Double(length)
+        XCTAssertEqual(ratio, 0.5, accuracy: 0.08,
+                       "expected ~50% of characters left visible, got \(ratio)")
+    }
+
+    func testZeroLengthParagraphYieldsNoPartialIndices() {
+        XCTAssertTrue(partialIndices(paragraphLength: 0).isEmpty)
+    }
+
+    // MARK: - Partial indices: determinism
+
+    /// Golden values pinned from the deterministic seeding algorithm.
+    ///
+    /// This is the regression guard for cross-launch stability. Swift's `Hasher` is
+    /// seeded randomly per process, so any implementation built on `Hasher` produces a
+    /// different mask on every app launch and cannot reproduce a pinned array. The
+    /// Key Decisions table in CLAUDE.md promises "same characters hidden every time for
+    /// a given document"; this test is what actually holds that promise.
+    func testPartialIndicesMatchPinnedGoldenValuesForFixedSeed() {
+        let indices = partialIndices(paragraphLength: 24)
+        XCTAssertEqual(indices, Self.goldenIndicesForFixedSeed)
+    }
+
+    func testPartialIndicesAreStableAcrossRepeatedComputation() {
+        XCTAssertEqual(partialIndices(paragraphLength: 200),
+                       partialIndices(paragraphLength: 200))
+    }
+
+    func testDifferentDocumentsProduceDifferentMasks() {
+        let other = UUID(uuidString: "FEEDFACE-9876-5432-DCBA-111111111111")!
+        XCTAssertNotEqual(partialIndices(paragraphLength: 200),
+                          partialIndices(paragraphLength: 200, seed: other))
+    }
+
+    func testDifferentParagraphsInSameDocumentProduceDifferentMasks() {
+        let result = engine.computeVisibility(
+            paragraphLengths: Array(repeating: 200, count: 4),
+            activeParagraphIndex: 3,
+            fullVisible: 1,
+            partialVisible: 2,
+            documentSeed: seed
+        )
+        let partials = result.filter { $0.visibility == .partial }
+        XCTAssertEqual(partials.count, 2)
+        XCTAssertNotEqual(partials[0].partiallyVisibleIndices,
+                          partials[1].partiallyVisibleIndices)
     }
 }
