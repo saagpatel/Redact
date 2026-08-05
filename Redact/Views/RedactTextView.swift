@@ -173,7 +173,7 @@ struct RedactTextView: UIViewRepresentable {
             // Compute new visibility
             let previousVisibility = parent.redactionState.paragraphs
             let newVisibility = visibilityEngine.computeVisibility(
-                paragraphCount: currentRanges.count,
+                paragraphLengths: currentRanges.map(\.length),
                 activeParagraphIndex: activeIndex,
                 fullVisible: parent.visibilityFullParagraphs,
                 partialVisible: parent.visibilityPartialParagraphs,
@@ -323,11 +323,22 @@ struct RedactTextView: UIViewRepresentable {
                         animated: false
                     )
                 case .partial:
+                    // Recomputed rather than read from the restored state. The persisted
+                    // indices are only as good as the build that wrote them: documents saved
+                    // before partial masking became deterministic carry a mask that covered
+                    // just the first 100 characters. Regenerating from the document seed makes
+                    // a restored paragraph look exactly like a freshly computed one, and it is
+                    // cheap now that the result depends only on the seed.
                     renderer.redact(
                         paragraphIndex: paragraphState.index,
                         paragraphRange: range,
                         in: textView,
-                        style: .partial(visibleCharIndices: paragraphState.partiallyVisibleIndices),
+                        style: .partial(
+                            visibleCharIndices: partialIndices(
+                                forParagraphAt: paragraphState.index,
+                                in: currentRanges
+                            )
+                        ),
                         animated: false
                     )
                 case .visible:
@@ -337,6 +348,15 @@ struct RedactTextView: UIViewRepresentable {
 
             // Position cursor at end
             textView.selectedRange = NSRange(location: textView.text.count, length: 0)
+        }
+
+        /// Regenerates a partial paragraph's mask from the document seed and its current length.
+        private func partialIndices(forParagraphAt index: Int, in ranges: [NSRange]) -> [Int] {
+            visibilityEngine.partiallyVisibleIndices(
+                paragraphIndex: index,
+                paragraphLength: ranges[index].length,
+                documentSeed: parent.documentID
+            )
         }
 
         // MARK: - Reveal

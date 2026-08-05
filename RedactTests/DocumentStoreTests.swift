@@ -7,16 +7,18 @@ final class DocumentStoreTests: XCTestCase {
     private var tempDir: URL!
     private var store: DocumentStore!
 
-    override func setUp() {
-        super.setUp()
+    // The async overrides inherit this class's @MainActor isolation; the synchronous ones
+    // are declared nonisolated by XCTest and cannot touch main-actor-isolated state.
+    override func setUp() async throws {
+        try await super.setUp()
         tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("RedactTests-\(UUID().uuidString)", isDirectory: true)
         store = DocumentStore(baseURL: tempDir)
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         try? FileManager.default.removeItem(at: tempDir)
-        super.tearDown()
+        try await super.tearDown()
     }
 
     // MARK: - Helpers
