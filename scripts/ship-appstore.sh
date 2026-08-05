@@ -11,39 +11,51 @@
 #   0. Full Xcode installed and selected:
 #        sudo xcode-select -s /Applications/Xcode.app
 #   1. Bundle id `com.redact.app` registered in the Apple Developer portal.
-#   2. Signed in to Xcode with the team in DEVELOPMENT_TEAM (see project.yml).
-#      project.yml uses CODE_SIGN_STYLE: Automatic, so Xcode creates and renews the
-#      distribution profile itself — there is no .mobileprovision to install by hand.
+#   2. Signing. project.yml uses CODE_SIGN_STYLE: Automatic and ExportOptions.plist
+#      uses signingStyle: automatic, so there is no .mobileprovision to install by
+#      hand. Xcode creates and renews the distribution profile, but only when it can
+#      authenticate — satisfy ONE of:
+#        a. sign in to Xcode with the team in DEVELOPMENT_TEAM (see project.yml), or
+#        b. export the App Store Connect API key variables below, which this script
+#           passes to both the archive and the export step.
+#      Both steps run with -allowProvisioningUpdates, which is what actually permits
+#      profile creation and renewal. Signing happens during archive, not export, so
+#      the credentials have to reach that step.
 #   3. App record created in App Store Connect for `com.redact.app`, with the
 #      metadata from APPSTORE-METADATA.md.
-#   4. For uploading, an App Store Connect API key from
+#   4. App Store Connect API key from
 #      App Store Connect → Users and Access → Integrations → App Store Connect API.
-#      Export these (the .p8 lives wherever you saved it):
+#      altool looks the .p8 up by name, so the directory name matters:
 #        export ASC_KEY_ID=XXXXXXXXXX
 #        export ASC_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-#        export ASC_KEY_PATH="$HOME/.appstoreconnect/private/AuthKey_XXXXXXXXXX.p8"
-#      They are optional here: when set they are passed through so automatic signing
-#      can resolve distribution certificates without an interactive Xcode session.
+#        export ASC_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_XXXXXXXXXX.p8"
+#      Optional here: without them the build falls back to the Xcode signing session.
 #
 # ── RUN ──────────────────────────────────────────────────────────────────────
 #        bash scripts/ship-appstore.sh
 #
 # Screenshots upload separately in App Store Connect; the .ipa does not carry them.
-# Redact is iPhone-only (TARGETED_DEVICE_FAMILY=1), so only the iPhone 6.9"
-# (1320x2868) set is required.
+# APPSTORE-METADATA.md lists the sizes and counts — confirm them against Apple's
+# current requirements before submitting, since which device sizes are mandatory
+# changes over time. The app is iPhone-only, so no iPad set applies.
 #
-# For a RESUBMISSION, bump the build number first so App Store Connect accepts a
-# new binary:
-#        agvtool next-version -all   # or edit CURRENT_PROJECT_VERSION in project.yml
+# For a RESUBMISSION, bump the build number before running by editing
+# CURRENT_PROJECT_VERSION in project.yml. Do not use `agvtool`: it writes into
+# Redact.xcodeproj, which is gitignored and which step [1/3] regenerates from
+# project.yml, so the bump would be silently discarded and App Store Connect would
+# reject the binary as a duplicate build number.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+PROJECT="Redact.xcodeproj"
 SCHEME="Redact"
 ARCHIVE="build/${SCHEME}.xcarchive"
 EXPORT_DIR="build/export"
 
-# Optional: forwarded to -exportArchive only when all three are present.
+# Passed to both xcodebuild invocations when all three are present. The `[@]+` form
+# is required, not stylistic: macOS ships bash 3.2, where expanding an empty array
+# under `set -u` is an unbound-variable error that would abort the default path.
 AUTH_ARGS=()
 if [[ -n "${ASC_KEY_ID:-}" && -n "${ASC_ISSUER_ID:-}" && -n "${ASC_KEY_PATH:-}" ]]; then
   AUTH_ARGS=(
@@ -59,22 +71,31 @@ fi
 echo "==> [1/3] regenerating Xcode project from project.yml"
 xcodegen generate
 
-echo "==> [2/3] archiving $SCHEME (Release, generic iOS device)"
+echo "==> [2/3] archiving $SCHEME (Release, generic iOS device, distribution-signed)"
 xcodebuild \
+  -project "$PROJECT" \
   -scheme "$SCHEME" \
   -destination 'generic/platform=iOS' \
   -configuration Release \
   -archivePath "$ARCHIVE" \
+  -allowProvisioningUpdates \
+  "${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"}" \
   clean archive
 
 echo "==> [3/3] exporting signed .ipa to $EXPORT_DIR"
+# Cleared first so a stale .ipa from an earlier run can never be reported as this
+# run's output: `clean archive` above cleans build products, not this directory.
+rm -rf "$EXPORT_DIR"
 xcodebuild -exportArchive \
   -archivePath "$ARCHIVE" \
   -exportOptionsPlist ExportOptions.plist \
   -exportPath "$EXPORT_DIR" \
-  "${AUTH_ARGS[@]}"
+  -allowProvisioningUpdates \
+  "${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"}"
 
-IPA="$(find "$EXPORT_DIR" -name '*.ipa' -maxdepth 1 -print -quit)"
+# Errors suppressed so the explicit guard below reports the failure, rather than a
+# bare `find: no such directory` when the export produced nothing at all.
+IPA="$(find "$EXPORT_DIR" -maxdepth 1 -name '*.ipa' -print -quit 2>/dev/null || true)"
 if [[ -z "$IPA" ]]; then
   echo "!! export finished but no .ipa was produced in $EXPORT_DIR" >&2
   exit 1
