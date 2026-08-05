@@ -13,9 +13,13 @@
 		<dict>
 			<key>NSPrivacyAccessedAPIType</key>
 			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<!-- 3B52.1: timestamps of files inside the app's own container. DocumentStore
+			     reads contentModificationDate to sort the document list. Not C617.1, which
+			     is for displaying file timestamps to the user — the dates shown in the UI
+			     come from the document JSON, never from the filesystem. -->
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
-				<string>C617.1</string>
+				<string>3B52.1</string>
 			</array>
 		</dict>
 	</array>
