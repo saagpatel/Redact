@@ -99,11 +99,6 @@ final class DateRelativeFormatTests: XCTestCase {
 
     // MARK: - Stability
 
-    func testDisplayIsStableAcrossRepeatedCalls() throws {
-        let date = try noon(daysFromToday: -5)
-        XCTAssertEqual(date.relativeDisplay, date.relativeDisplay)
-    }
-
     func testDistinctOlderDaysProduceDistinctDisplays() throws {
         let earlier = try noon(daysFromToday: -5)
         let later = try noon(daysFromToday: -4)

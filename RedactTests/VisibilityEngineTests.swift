@@ -411,9 +411,35 @@ final class VisibilityEngineTests: XCTestCase {
         XCTAssertEqual(indices, Self.goldenIndicesForFixedSeed)
     }
 
-    func testPartialIndicesAreStableAcrossRepeatedComputation() {
-        XCTAssertEqual(partialIndices(paragraphLength: 200),
-                       partialIndices(paragraphLength: 200))
+    /// The mask must depend only on the document, the paragraph's index, and its length —
+    /// never on how many paragraphs exist or where the cursor is. Seeding on either would
+    /// make already-written paragraphs reshuffle as the writer keeps going.
+    func testPartialIndicesDoNotDependOnDocumentShapeOrCursorPosition() {
+        func paragraphOneMask(in lengths: [Int]) -> [Int] {
+            let result = engine.computeVisibility(
+                paragraphLengths: lengths,
+                activeParagraphIndex: 2,
+                fullVisible: 1,
+                partialVisible: 1,
+                documentSeed: seed
+            )
+            XCTAssertEqual(result[1].visibility, .partial)
+            return result[1].partiallyVisibleIndices
+        }
+
+        XCTAssertEqual(paragraphOneMask(in: [40, 200, 40]),
+                       paragraphOneMask(in: [40, 200, 40, 90, 120, 75]))
+    }
+
+    /// A longer paragraph must extend the mask, not regenerate it. If the seed ever folded in
+    /// paragraph length, every character's state would change whenever the length did.
+    func testALongerParagraphExtendsTheMaskRatherThanReshufflingIt() {
+        let shorter = partialIndices(paragraphLength: 100)
+        let longer = partialIndices(paragraphLength: 400)
+
+        XCTAssertFalse(shorter.isEmpty)
+        XCTAssertGreaterThan(longer.count, shorter.count)
+        XCTAssertEqual(Array(longer.prefix(shorter.count)), shorter)
     }
 
     func testDifferentDocumentsProduceDifferentMasks() {

@@ -278,14 +278,23 @@ final class OverlayRenderer: OverlayRendering {
 
     /// Collapses runs of adjacent masked characters into single rects.
     ///
-    /// Masking each glyph with its own layer makes layer count grow with paragraph length —
-    /// the per-character layer explosion the architecture explicitly rules out. Adjacent
-    /// masked characters share a line and a baseline, so one rect spanning the run renders
-    /// identically for a fraction of the layers, and reads as a redaction bar rather than a
-    /// row of slivers.
+    /// Adjacent masked characters share a line and a baseline, so one rect spanning the run
+    /// renders identically using fewer layers, and reads as a redaction bar rather than a row
+    /// of slivers.
     ///
-    /// Input must be ordered by character index, as produced by the glyph walk above.
-    static func mergeContiguousRects(_ glyphs: [(charIndex: Int, rect: CGRect)]) -> [CGRect] {
+    /// This reduces the layer count by roughly 4x; it does not bound it. The mask selects each
+    /// character independently at ~50%, so run lengths are geometrically distributed with a
+    /// mean of 2 and the total stays linear in paragraph length: roughly 100 layers for a
+    /// 400-character paragraph, and about 1,300 for a 5,000-character one. Ordinary paragraphs
+    /// are comfortable; a writer who never presses return is not bounded by anything here.
+    ///
+    /// Two preconditions, both satisfied by the glyph walk above: input is ordered ascending by
+    /// character index, and every glyph in a call belongs to one line fragment. Note that
+    /// character adjacency is assumed to imply visual adjacency, which holds for
+    /// left-to-right and pure right-to-left text but not across a bidirectional boundary,
+    /// where a union can span the gap between two runs. That over-masks; it cannot reveal
+    /// text that should be hidden.
+    nonisolated static func mergeContiguousRects(_ glyphs: [(charIndex: Int, rect: CGRect)]) -> [CGRect] {
         guard let first = glyphs.first else { return [] }
 
         var merged: [CGRect] = []

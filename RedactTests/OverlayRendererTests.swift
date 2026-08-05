@@ -267,11 +267,12 @@ final class OverlayRendererTests: XCTestCase {
         XCTAssertTrue(covered, "the tail of a long paragraph must be masked, not left readable")
     }
 
-    func testPartialRedactionIsStableForIdenticalInput() {
-        let text = String(repeating: "stable output ", count: 10)
-        let visible = [0, 5, 9, 14, 22, 31]
+    /// Changing which characters stay visible must change what gets masked. Guards against a
+    /// renderer that ignores `visibleCharIndices` and masks the paragraph uniformly.
+    func testDifferentVisibleSetsProduceDifferentMasks() {
+        let text = String(repeating: "masked output ", count: 6)
 
-        func frames() -> [CGRect] {
+        func frames(visible: [Int]) -> [CGRect] {
             let textView = makeTextView(text)
             let renderer = OverlayRenderer()
             renderer.redact(paragraphIndex: 0, paragraphRange: fullRange(textView), in: textView,
@@ -279,7 +280,8 @@ final class OverlayRendererTests: XCTestCase {
             return shapeLayers(in: textView).map(\.frame)
         }
 
-        XCTAssertEqual(frames(), frames())
+        XCTAssertNotEqual(frames(visible: [0, 5, 9, 14, 22, 31]),
+                          frames(visible: [1, 6, 10, 15, 23, 32]))
     }
 
     // MARK: - mergeContiguousRects
