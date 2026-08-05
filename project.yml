@@ -80,3 +80,32 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.redact.testharness
         PRODUCT_NAME: RedactTestHarness
     scheme: {}
+
+  # App Store screenshot capture. Deliberately NOT in the Redact scheme's
+  # testTargets: UI tests boot and drive the app, which would add minutes to
+  # `make test` and to every CI run for something only needed at release time.
+  # It gets its own scheme instead — see `schemes:` below.
+  RedactUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: RedactUITests
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: Redact
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: com.redact.uitests
+        TEST_TARGET_NAME: Redact
+
+schemes:
+  RedactScreenshots:
+    build:
+      targets:
+        Redact: all
+        RedactUITests: [test]
+    test:
+      targets:
+        - RedactUITests
