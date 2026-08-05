@@ -284,41 +284,153 @@ final class OverlayRendererTests: XCTestCase {
                           frames(visible: [1, 6, 10, 15, 23, 32]))
     }
 
-    // MARK: - mergeContiguousRects
+    // MARK: - The product invariant: visible characters stay visible
 
-    func testMergeCollapsesAdjacentCharactersIntoOneRect() {
-        let glyphs = [
-            (charIndex: 0, rect: CGRect(x: 0, y: 0, width: 10, height: 20)),
-            (charIndex: 1, rect: CGRect(x: 10, y: 0, width: 10, height: 20)),
-            (charIndex: 2, rect: CGRect(x: 20, y: 0, width: 10, height: 20)),
+    /// Every character in `visibleCharIndices` must have its glyph left uncovered. This is the
+    /// promise partial redaction makes, checked against real TextKit layout rather than against
+    /// the merge helper in isolation.
+    private func assertVisibleGlyphsAreUncovered(
+        text: String,
+        visible: [Int],
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let textView = makeTextView(text)
+        let range = fullRange(textView)
+        renderer.redact(paragraphIndex: 0, paragraphRange: range, in: textView,
+                        style: .partial(visibleCharIndices: visible), animated: false)
+
+        let layoutManager = textView.layoutManager
+        let inset = textView.textContainerInset
+        let layers = shapeLayers(in: textView)
+
+        for charIndex in visible where charIndex < range.length {
+            let glyphIndex = layoutManager.glyphIndexForCharacter(at: charIndex)
+
+            // Measured with the same bidi-correct API the renderer uses. boundingRect would
+            // report the whole enclosing run for a right-to-left glyph, so its centre could
+            // land on a neighbouring character and the assertion would be meaningless.
+            var glyphRects: [CGRect] = []
+            layoutManager.enumerateEnclosingRects(
+                forGlyphRange: NSRange(location: glyphIndex, length: 1),
+                withinSelectedGlyphRange: NSRange(location: NSNotFound, length: 0),
+                in: textView.textContainer
+            ) { rect, _ in
+                glyphRects.append(rect.offsetBy(dx: inset.left, dy: inset.top))
+            }
+
+            for glyphRect in glyphRects {
+                // Zero-width glyphs have no visible area to protect.
+                guard glyphRect.width > 1 else { continue }
+
+                let covered = layers.contains {
+                    $0.frame.insetBy(dx: 0.5, dy: 0.5).contains(glyphRect.center)
+                }
+                XCTAssertFalse(covered,
+                               "character \(charIndex) is meant to stay visible but is masked",
+                               file: file, line: line)
+            }
+        }
+    }
+
+    func testVisibleCharactersStayUncoveredInLeftToRightText() {
+        assertVisibleGlyphsAreUncovered(
+            text: String(repeating: "the quick brown fox ", count: 5),
+            visible: Array(stride(from: 0, to: 100, by: 2))
+        )
+    }
+
+    /// Arabic with an embedded English run — the layout that breaks index-based merging.
+    func testVisibleCharactersStayUncoveredInBidirectionalText() {
+        assertVisibleGlyphsAreUncovered(
+            text: "مرحبا بالعالم hello world مرحبا بالعالم",
+            visible: Array(stride(from: 0, to: 39, by: 2))
+        )
+    }
+
+    func testVisibleCharactersStayUncoveredInRightToLeftText() {
+        assertVisibleGlyphsAreUncovered(
+            text: "מהו הטקסט הזה שאנחנו כותבים כאן היום",
+            visible: Array(stride(from: 0, to: 35, by: 3))
+        )
+    }
+
+    // MARK: - mergeAdjacentRects
+
+    func testMergeCollapsesTouchingRectsIntoOneBar() {
+        let rects = [
+            CGRect(x: 0, y: 0, width: 10, height: 20),
+            CGRect(x: 10, y: 0, width: 10, height: 20),
+            CGRect(x: 20, y: 0, width: 10, height: 20),
         ]
-        XCTAssertEqual(OverlayRenderer.mergeContiguousRects(glyphs),
+        XCTAssertEqual(OverlayRenderer.mergeAdjacentRects(rects),
                        [CGRect(x: 0, y: 0, width: 30, height: 20)])
     }
 
-    func testMergeKeepsNonAdjacentCharactersSeparate() {
-        let glyphs = [
-            (charIndex: 0, rect: CGRect(x: 0, y: 0, width: 10, height: 20)),
-            (charIndex: 5, rect: CGRect(x: 50, y: 0, width: 10, height: 20)),
+    func testMergeLeavesAGapUncovered() {
+        let rects = [
+            CGRect(x: 0, y: 0, width: 10, height: 20),
+            CGRect(x: 50, y: 0, width: 10, height: 20),
         ]
-        XCTAssertEqual(OverlayRenderer.mergeContiguousRects(glyphs).count, 2)
+        XCTAssertEqual(OverlayRenderer.mergeAdjacentRects(rects).count, 2,
+                       "a visible character sits in that gap and must not be covered")
+    }
+
+    func testMergeDoesNotJoinRectsOnDifferentLines() {
+        let rects = [
+            CGRect(x: 100, y: 0, width: 10, height: 20),
+            CGRect(x: 100, y: 20, width: 10, height: 20),
+        ]
+        XCTAssertEqual(OverlayRenderer.mergeAdjacentRects(rects).count, 2)
+    }
+
+    /// The bidi case: two rects whose characters are adjacent but which render at opposite ends
+    /// of the line. Merging on character index would union them and black out everything
+    /// between, including glyphs meant to stay visible.
+    func testMergeDoesNotJoinRectsAcrossABidirectionalJump() {
+        let rects = [
+            CGRect(x: 240, y: 0, width: 10, height: 20),
+            CGRect(x: 12, y: 0, width: 10, height: 20),
+        ]
+        let merged = OverlayRenderer.mergeAdjacentRects(rects)
+
+        XCTAssertEqual(merged.count, 2)
+        XCTAssertFalse(merged.contains { $0.width > 100 },
+                       "no bar may span the gap between two bidirectional runs")
+    }
+
+    func testMergeJoinsRightToLeftRunsThatAdvanceLeftward() {
+        // RTL: successive glyphs sit further left, and still abut.
+        let rects = [
+            CGRect(x: 200, y: 0, width: 10, height: 20),
+            CGRect(x: 190, y: 0, width: 10, height: 20),
+            CGRect(x: 180, y: 0, width: 10, height: 20),
+        ]
+        XCTAssertEqual(OverlayRenderer.mergeAdjacentRects(rects),
+                       [CGRect(x: 180, y: 0, width: 30, height: 20)])
+    }
+
+    func testMergeToleratesSubPointKerningGaps() {
+        let rects = [
+            CGRect(x: 0, y: 0, width: 10, height: 20),
+            CGRect(x: 10.25, y: 0, width: 10, height: 20),
+        ]
+        XCTAssertEqual(OverlayRenderer.mergeAdjacentRects(rects).count, 1)
     }
 
     func testMergeOfEmptyInputIsEmpty() {
-        XCTAssertTrue(OverlayRenderer.mergeContiguousRects([]).isEmpty)
+        XCTAssertTrue(OverlayRenderer.mergeAdjacentRects([]).isEmpty)
     }
 
-    func testMergeOfSingleGlyphReturnsThatGlyph() {
+    func testMergeOfSingleRectReturnsThatRect() {
         let rect = CGRect(x: 4, y: 8, width: 10, height: 20)
-        XCTAssertEqual(OverlayRenderer.mergeContiguousRects([(charIndex: 3, rect: rect)]), [rect])
+        XCTAssertEqual(OverlayRenderer.mergeAdjacentRects([rect]), [rect])
     }
 
-    func testMergeProducesFewerLayersThanMaskedCharacters() {
-        let glyphs = (0..<40).map {
-            (charIndex: $0, rect: CGRect(x: CGFloat($0) * 10, y: 0, width: 10, height: 20))
-        }
-        XCTAssertEqual(OverlayRenderer.mergeContiguousRects(glyphs).count, 1,
-                       "40 adjacent masked characters must collapse to a single bar")
+    func testMergeProducesFewerBarsThanMaskedCharacters() {
+        let rects = (0..<40).map { CGRect(x: CGFloat($0) * 10, y: 0, width: 10, height: 20) }
+        XCTAssertEqual(OverlayRenderer.mergeAdjacentRects(rects).count, 1,
+                       "40 touching glyphs must collapse to a single bar")
     }
 
     // MARK: - Reposition

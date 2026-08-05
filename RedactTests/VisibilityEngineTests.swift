@@ -431,6 +431,50 @@ final class VisibilityEngineTests: XCTestCase {
                        paragraphOneMask(in: [40, 200, 40, 90, 120, 75]))
     }
 
+    // MARK: - Single-paragraph mask (used by session restore)
+
+    /// Restore regenerates a paragraph's mask instead of trusting persisted indices. That is
+    /// only safe if the single-paragraph API agrees exactly with the full computation.
+    func testSingleParagraphMaskMatchesTheFullComputation() {
+        let lengths = [40, 250, 40]
+        let full = engine.computeVisibility(
+            paragraphLengths: lengths,
+            activeParagraphIndex: 2,
+            fullVisible: 1,
+            partialVisible: 1,
+            documentSeed: seed
+        )
+        XCTAssertEqual(full[1].visibility, .partial)
+
+        XCTAssertEqual(
+            engine.partiallyVisibleIndices(paragraphIndex: 1, paragraphLength: lengths[1], documentSeed: seed),
+            full[1].partiallyVisibleIndices
+        )
+    }
+
+    /// The upgrade case. A document saved by the pre-fix build carries a mask that only ever
+    /// reached character 99. Regenerating produces the whole-paragraph mask instead, which is
+    /// the point of recomputing at restore rather than replaying what was stored.
+    func testRegeneratedMaskReplacesALegacyHundredCharacterMask() {
+        let legacyPersisted = (0..<100).filter { $0.isMultiple(of: 2) }
+        let regenerated = engine.partiallyVisibleIndices(
+            paragraphIndex: 1,
+            paragraphLength: 400,
+            documentSeed: seed
+        )
+
+        XCTAssertEqual(legacyPersisted.max(), 98)
+        XCTAssertGreaterThan(regenerated.max() ?? 0, 300,
+                             "a regenerated mask must cover the whole paragraph")
+        XCTAssertNotEqual(regenerated, legacyPersisted)
+    }
+
+    func testSingleParagraphMaskIsEmptyForAnEmptyParagraph() {
+        XCTAssertTrue(
+            engine.partiallyVisibleIndices(paragraphIndex: 0, paragraphLength: 0, documentSeed: seed).isEmpty
+        )
+    }
+
     /// A longer paragraph must extend the mask, not regenerate it. If the seed ever folded in
     /// paragraph length, every character's state would change whenever the length did.
     func testALongerParagraphExtendsTheMaskRatherThanReshufflingIt() {

@@ -46,6 +46,19 @@ struct VisibilityEngine {
         }
     }
 
+    /// The mask for a single paragraph, depending only on the document, the paragraph's index,
+    /// and its length — not on the document's shape or the cursor position.
+    ///
+    /// Session restore uses this to regenerate a paragraph's mask instead of trusting indices
+    /// persisted by an older build, which is safe precisely because the result is reproducible.
+    func partiallyVisibleIndices(paragraphIndex: Int, paragraphLength: Int, documentSeed: UUID) -> [Int] {
+        computePartialIndices(
+            paragraphIndex: paragraphIndex,
+            seed: documentSeed,
+            paragraphLength: paragraphLength
+        )
+    }
+
     /// Returns only paragraphs whose visibility changed between previous and current state.
     func visibilityChanges(
         previous: [RedactionState.ParagraphState],
