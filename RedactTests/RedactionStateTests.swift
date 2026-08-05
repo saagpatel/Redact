@@ -116,4 +116,81 @@ final class RedactionStateTests: XCTestCase {
         XCTAssertEqual(RedactionState.VisibilityLevel.partial.rawValue, "partial")
         XCTAssertEqual(RedactionState.VisibilityLevel.redacted.rawValue, "redacted")
     }
+
+    // MARK: - Schema version
+
+    private func decodeState(_ json: String) throws -> RedactionState {
+        try JSONDecoder().decode(RedactionState.self, from: Data(json.utf8))
+    }
+
+    func testNewStateCarriesTheCurrentSchemaVersion() {
+        let state = RedactionState(
+            paragraphs: [.init(index: 0, visibility: .visible, partiallyVisibleIndices: [])],
+            activeParagraphIndex: 0
+        )
+        XCTAssertEqual(state.schemaVersion, RedactionState.currentSchemaVersion)
+    }
+
+    /// Documents written before the field existed must still open. Their masks are regenerated
+    /// at restore, so nothing needs migrating — but refusing to decode them would lose the text.
+    func testStateWithoutASchemaVersionDecodesAsVersionOne() throws {
+        let legacy = """
+        {"paragraphs":[{"index":0,"visibility":"partial","partiallyVisibleIndices":[0,2,4]}],
+         "activeParagraphIndex":0}
+        """
+        let decoded = try decodeState(legacy)
+
+        XCTAssertEqual(decoded.schemaVersion, 1)
+        XCTAssertEqual(decoded.paragraphs.count, 1)
+        XCTAssertEqual(decoded.paragraphs[0].partiallyVisibleIndices, [0, 2, 4])
+        XCTAssertEqual(decoded.activeParagraphIndex, 0)
+    }
+
+    func testCurrentVersionRoundTrips() throws {
+        let state = RedactionState(
+            paragraphs: [.init(index: 0, visibility: .redacted, partiallyVisibleIndices: [])],
+            activeParagraphIndex: 0
+        )
+        let decoded = try JSONDecoder().decode(
+            RedactionState.self,
+            from: JSONEncoder().encode(state)
+        )
+
+        XCTAssertEqual(decoded, state)
+        XCTAssertEqual(decoded.schemaVersion, RedactionState.currentSchemaVersion)
+    }
+
+    func testEncodedStateWritesTheSchemaVersion() throws {
+        let state = RedactionState(
+            paragraphs: [.init(index: 0, visibility: .visible, partiallyVisibleIndices: [])],
+            activeParagraphIndex: 0
+        )
+        let json = try XCTUnwrap(String(data: JSONEncoder().encode(state), encoding: .utf8))
+
+        XCTAssertTrue(json.contains("\"schemaVersion\""), "the version must be persisted, not just held in memory")
+    }
+
+    /// The failure a version-less format cannot detect: a state written by a newer build,
+    /// opened by an older one. Guessing at the fields is worse than refusing them.
+    func testStateFromANewerBuildIsRefused() {
+        let future = """
+        {"schemaVersion":\(RedactionState.currentSchemaVersion + 1),
+         "paragraphs":[{"index":0,"visibility":"visible","partiallyVisibleIndices":[]}],
+         "activeParagraphIndex":0}
+        """
+        XCTAssertThrowsError(try decodeState(future)) { error in
+            guard case DecodingError.dataCorrupted = error else {
+                return XCTFail("expected a dataCorrupted error, got \(error)")
+            }
+        }
+    }
+
+    func testStateAtExactlyTheCurrentVersionIsAccepted() throws {
+        let current = """
+        {"schemaVersion":\(RedactionState.currentSchemaVersion),
+         "paragraphs":[{"index":0,"visibility":"visible","partiallyVisibleIndices":[]}],
+         "activeParagraphIndex":0}
+        """
+        XCTAssertEqual(try decodeState(current).schemaVersion, RedactionState.currentSchemaVersion)
+    }
 }
