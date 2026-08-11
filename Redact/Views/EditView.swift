@@ -72,16 +72,20 @@ struct EditView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 TextField("Title", text: titleBinding)
-                    .font(.title2.weight(.bold))
+                    .font(.system(.title2, design: .serif).weight(.bold))
+                    .foregroundColor(Theme.ink)
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
 
                 TextEditor(text: rawTextBinding)
-                    .font(.custom("Georgia", size: 18))
+                    .font(.custom("Georgia", size: 18, relativeTo: .body))
+                    .foregroundColor(Theme.ink)
+                    .scrollContentBackground(.hidden)
                     .frame(minHeight: 400)
                     .padding(.horizontal, 16)
             }
         }
+        .background(Theme.paper.ignoresSafeArea())
     }
 
     // MARK: - Bindings

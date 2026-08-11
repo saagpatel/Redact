@@ -12,18 +12,22 @@ struct NewDocumentSheet: View {
             Form {
                 Section {
                     TextField("Untitled", text: $title)
+                        .font(.system(.body, design: .serif))
                         .textInputAutocapitalization(.words)
                 } header: {
-                    Text("Title")
+                    EyebrowText("Title")
                 }
 
                 Section {
-                    TextField("No target — write until done", text: $wordCountTargetText)
+                    TextField("Leave empty to write until done", text: $wordCountTargetText)
+                        .font(.system(.body, design: .monospaced))
                         .keyboardType(.numberPad)
                 } header: {
-                    Text("Word Count Target")
+                    EyebrowText("Word Count Target")
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.paper)
             .navigationTitle("New Document")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

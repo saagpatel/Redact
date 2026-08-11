@@ -42,8 +42,8 @@ struct RedactTextView: UIViewRepresentable {
 
         // Appearance
         textView.backgroundColor = .clear
-        textView.textColor = .label
-        textView.tintColor = .label
+        textView.textColor = .redactInk
+        textView.tintColor = .redactInk
 
         // Keyboard
         textView.autocorrectionType = .default

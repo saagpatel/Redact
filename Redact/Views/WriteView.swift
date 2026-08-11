@@ -92,7 +92,7 @@ struct WriteView: View {
                 .frame(minHeight: 400)
             }
         }
-        .background(Color(.systemBackground))
+        .background(Theme.paper.ignoresSafeArea())
     }
 
     // MARK: - Top Bar
@@ -117,23 +117,30 @@ struct WriteView: View {
         Group {
             if let target = document.wordCountTarget {
                 Text("\(wordCount) / \(target)")
-                    .foregroundColor(wordCount >= target ? .green : .secondary)
+                    .foregroundColor(wordCount >= target ? Theme.ink : Theme.inkSecondary)
+                    .fontWeight(wordCount >= target ? .semibold : .regular)
             } else {
                 Text("\(wordCount) words")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Theme.inkSecondary)
             }
         }
-        .font(.subheadline.monospacedDigit())
+        .font(.system(.footnote, design: .monospaced))
     }
 
     private var doneButton: some View {
         Text("Done")
-            .font(.body.weight(.semibold))
-            .foregroundColor(.primary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 8))
+            .font(Theme.eyebrow(.footnote))
+            .textCase(.uppercase)
+            .tracking(1.5)
+            .foregroundColor(Theme.paper)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 9)
+            .background(Theme.ink)
+            .padding(.vertical, 7)
+            .contentShape(Rectangle())
+            .accessibilityIdentifier("Done")
             .accessibilityLabel("Done")
+            .accessibilityAddTraits(.isButton)
             .accessibilityHint("Hold to reveal your document")
             .onLongPressGesture(minimumDuration: 0.8, perform: {
                 triggerReveal()
@@ -152,11 +159,13 @@ struct WriteView: View {
             .overlay(alignment: .bottom) {
                 if showDoneTooltip {
                     Text("Hold to reveal")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 6))
-                        .offset(y: 28)
+                        .font(Theme.meta)
+                        .foregroundColor(Theme.ink)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Theme.paperRaised)
+                        .overlay(Rectangle().strokeBorder(Theme.inkFaint, lineWidth: 1))
+                        .offset(y: 32)
                         .transition(.opacity)
                         .animation(.easeInOut(duration: 0.2), value: showDoneTooltip)
                 }
@@ -166,13 +175,14 @@ struct WriteView: View {
     // MARK: - Training Banner
 
     private var trainingBanner: some View {
-        Text("Training mode — you can see more of your writing. Dismisses after your first reveal.")
-            .font(.footnote)
-            .foregroundColor(.secondary)
+        Text("Training mode: you can see more of your writing. Dismisses after your first reveal.")
+            .font(Theme.meta)
+            .foregroundColor(Theme.inkSecondary)
             .multilineTextAlignment(.center)
             .padding(12)
             .frame(maxWidth: .infinity)
-            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+            .background(Theme.paperRaised)
+            .overlay(Rectangle().strokeBorder(Theme.inkFaint, lineWidth: 1))
             .padding(.horizontal, 16)
             .padding(.bottom, 8)
     }

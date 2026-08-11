@@ -8,39 +8,49 @@ struct StatsView: View {
     @State private var showShareSheet = false
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Writing Complete")
-                .font(.headline)
-                .foregroundColor(.primary)
+        VStack(spacing: 0) {
+            // The card leads with its own redaction bar.
+            Rectangle()
+                .fill(Theme.ink)
+                .frame(height: 6)
 
-            HStack(spacing: 24) {
-                statItem(value: "\(stats.wordCount)", label: "Words")
-                    .accessibilityLabel("Word count: \(stats.wordCount)")
-                statItem(value: "\(stats.paragraphCount)", label: "Paragraphs")
-                    .accessibilityLabel("Paragraph count: \(stats.paragraphCount)")
-                statItem(value: formattedDuration, label: "Duration")
-                    .accessibilityLabel("Duration: \(accessibleDuration)")
-                statItem(value: "\(Int(stats.wordsPerMinute))", label: "WPM")
-                    .accessibilityLabel("Words per minute: \(Int(stats.wordsPerMinute))")
-            }
+            VStack(spacing: 20) {
+                EyebrowText("Session Report", color: Theme.inkSecondary)
+                    .accessibilityAddTraits(.isHeader)
 
-            HStack(spacing: 16) {
-                Button("Start Editing") {
-                    onDismiss()
+                HStack(spacing: 0) {
+                    statItem(value: "\(stats.wordCount)", label: "Words")
+                        .accessibilityLabel("Word count: \(stats.wordCount)")
+                    divider
+                    statItem(value: "\(stats.paragraphCount)", label: "Paragraphs")
+                        .accessibilityLabel("Paragraph count: \(stats.paragraphCount)")
+                    divider
+                    statItem(value: formattedDuration, label: "Duration")
+                        .accessibilityLabel("Duration: \(accessibleDuration)")
+                    divider
+                    statItem(value: "\(Int(stats.wordsPerMinute))", label: "WPM")
+                        .accessibilityLabel("Words per minute: \(Int(stats.wordsPerMinute))")
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.primary)
 
-                Button("Share") {
-                    showShareSheet = true
+                HStack(spacing: 12) {
+                    Button("Start Editing") {
+                        onDismiss()
+                    }
+                    .buttonStyle(BarButtonStyle())
+                    .accessibilityIdentifier("Start Editing")
+
+                    Button("Share") {
+                        showShareSheet = true
+                    }
+                    .buttonStyle(GhostButtonStyle())
+                    .accessibilityIdentifier("Share")
                 }
-                .buttonStyle(.bordered)
             }
+            .padding(20)
         }
-        .padding(24)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.15), radius: 12, y: 4)
+        .background(Theme.paperRaised)
+        .overlay(Rectangle().strokeBorder(Theme.inkFaint, lineWidth: 1))
+        .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
         .padding(.horizontal, 16)
         .padding(.bottom, 32)
         .sheet(isPresented: $showShareSheet) {
@@ -48,15 +58,24 @@ struct StatsView: View {
         }
     }
 
+    private var divider: some View {
+        Rectangle()
+            .fill(Theme.inkFaint)
+            .frame(width: 1, height: 36)
+    }
+
     private func statItem(value: String, label: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.title2.weight(.bold))
-                .foregroundColor(.primary)
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(Theme.numeral)
+                .foregroundColor(Theme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            EyebrowText(label, style: .caption2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
+        .frame(maxWidth: .infinity)
     }
 
     private var formattedDuration: String {
