@@ -6,4 +6,4 @@ If you choose Copy, Save, or Share, iOS sends the content only to the destinatio
 
 Last updated: July 12, 2026
 
-Contact: saagarpatel08@gmail.com
+Contact: saagar210@gmail.com
