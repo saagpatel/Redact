@@ -7,7 +7,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Visibility Rules") {
+                Section {
                     Stepper(
                         "Fully visible: \(appState.settings.visibilityFullParagraphs)",
                         value: $appState.settings.visibilityFullParagraphs,
@@ -18,33 +18,43 @@ struct SettingsView: View {
                         value: $appState.settings.visibilityPartialParagraphs,
                         in: 0...3
                     )
+                } header: {
+                    EyebrowText("Visibility Rules")
                 }
 
-                Section("Training Mode") {
+                Section {
                     Toggle("Enable on first document", isOn: $appState.settings.trainingModeEnabled)
+                } header: {
+                    EyebrowText("Training Mode")
                 }
 
-                Section("About") {
+                Section {
                     HStack {
                         Text("Version")
                         Spacer()
                         Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Theme.inkSecondary)
                     }
                     Text("Write without looking back.")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
+                        .font(.system(.footnote, design: .serif).italic())
+                        .foregroundColor(Theme.inkSecondary)
+                } header: {
+                    EyebrowText("About")
                 }
 
                 #if DEBUG
-                Section("Debug") {
+                Section {
                     Button("Reset First Document Flag") {
                         appState.settings.hasCompletedFirstDocument = false
                         appState.save()
                     }
+                } header: {
+                    EyebrowText("Debug")
                 }
                 #endif
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.paper)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -27,7 +27,8 @@ struct DocumentListView: View {
     var body: some View {
         NavigationStack(path: $path) {
             content
-                .navigationTitle("Redact")
+                .navigationTitle("")
+                .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     leadingToolbarContent
                     trailingToolbarContent
@@ -119,41 +120,70 @@ struct DocumentListView: View {
 
     @ViewBuilder
     private var content: some View {
-        if documents.isEmpty && inProgressDocument == nil {
-            emptyState
-        } else {
-            List {
-                if inProgressDocument != nil {
-                    Section("In Progress") {
-                        inProgressCard
+        Group {
+            if documents.isEmpty && inProgressDocument == nil {
+                emptyState
+            } else {
+                List {
+                    masthead
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 4, trailing: 20))
+
+                    if inProgressDocument != nil {
+                        Section {
+                            inProgressCard
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                        } header: {
+                            BarSectionHeader(title: "In Progress")
+                        }
+                    }
+
+                    if !documents.isEmpty {
+                        completedList
                     }
                 }
-
-                if !documents.isEmpty {
-                    completedList
-                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
             }
-            .listStyle(.insetGrouped)
         }
+        .background(Theme.paper.ignoresSafeArea())
     }
 
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
+        VStack(alignment: .leading, spacing: 0) {
+            masthead
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
             Spacer()
-            Image(systemName: "doc.text")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-            Text("No Documents Yet")
-                .font(.title3.weight(.semibold))
-                .foregroundColor(.primary)
-            Text("Tap + to start writing")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            VStack(spacing: 24) {
+                RedactionBarsGlyph()
+                VStack(spacing: 8) {
+                    Text("Nothing on file")
+                        .font(.system(.title3, design: .serif).weight(.semibold))
+                        .foregroundColor(Theme.ink)
+                    EyebrowText("Tap + to start writing")
+                }
+            }
+            .frame(maxWidth: .infinity)
             Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// The letterhead: serif masthead over a thin ink rule.
+    private var masthead: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Redact")
+                .font(.system(.largeTitle, design: .serif).weight(.black))
+                .foregroundColor(Theme.ink)
+                .accessibilityAddTraits(.isHeader)
+            Rectangle()
+                .fill(Theme.ink)
+                .frame(height: 3)
+        }
     }
 
     // MARK: - In-Progress Card
@@ -164,44 +194,69 @@ struct DocumentListView: View {
                 path.append(.write(doc.id))
             }
         } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Continue Writing")
-                        .font(.headline)
-                    Image(systemName: "arrow.right")
-                }
-                .foregroundColor(.accentColor)
+            HStack(spacing: 0) {
+                Rectangle()
+                    .fill(Theme.ink)
+                    .frame(width: 3)
 
-                Text("\(inProgressDocument?.title ?? "Untitled") · \(inProgressDocument?.rawText.wordCount ?? 0) words")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(Theme.stamp)
+                            .frame(width: 7, height: 7)
+                        EyebrowText("Continue Writing", color: Theme.ink)
+                        Image(systemName: "arrow.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(Theme.ink)
+                        Spacer(minLength: 0)
+                    }
 
-                if let target = inProgressDocument?.wordCountTarget {
-                    let current = inProgressDocument?.rawText.wordCount ?? 0
-                    ProgressView(value: Double(min(current, target)), total: Double(target))
-                        .tint(.accentColor)
-                    Text("\(current) / \(target)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Text("\(inProgressDocument?.title ?? "Untitled") · \(inProgressDocument?.rawText.wordCount ?? 0) words")
+                        .font(Theme.meta)
+                        .foregroundColor(Theme.inkSecondary)
+
+                    if let target = inProgressDocument?.wordCountTarget {
+                        let current = inProgressDocument?.rawText.wordCount ?? 0
+                        targetProgressBar(current: current, target: target)
+                        Text("\(current) / \(target)")
+                            .font(Theme.meta)
+                            .foregroundColor(Theme.inkSecondary)
+                    }
                 }
+                .padding(14)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.paperRaised)
+            .overlay(Rectangle().strokeBorder(Theme.inkFaint, lineWidth: 1))
         }
         .buttonStyle(.plain)
+    }
+
+    private func targetProgressBar(current: Int, target: Int) -> some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(Theme.inkFaint)
+                Rectangle()
+                    .fill(Theme.ink)
+                    .frame(width: proxy.size.width * min(1, CGFloat(current) / CGFloat(max(target, 1))))
+            }
+        }
+        .frame(height: 3)
+        .accessibilityElement()
+        .accessibilityLabel("Progress: \(current) of \(target) words")
     }
 
     // MARK: - Completed List
 
     private var completedList: some View {
-        Section("Completed") {
+        Section {
             ForEach(documents) { doc in
                 Button {
                     path.append(.edit(doc.id))
                 } label: {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 5) {
                         Text(doc.title)
-                            .font(.headline)
-                            .foregroundColor(.primary)
+                            .font(Theme.serifTitle)
+                            .foregroundColor(Theme.ink)
 
                         HStack(spacing: 8) {
                             Text("\(doc.rawText.wordCount) words")
@@ -212,11 +267,13 @@ struct DocumentListView: View {
                                 Text(formatDuration(stats.durationSeconds))
                             }
                         }
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(Theme.meta)
+                        .foregroundColor(Theme.inkSecondary)
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 6)
                 }
+                .listRowBackground(Color.clear)
+                .listRowSeparatorTint(Theme.inkFaint)
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
                         documentToDelete = doc
@@ -226,6 +283,8 @@ struct DocumentListView: View {
                     }
                 }
             }
+        } header: {
+            BarSectionHeader(title: "Completed")
         }
     }
 

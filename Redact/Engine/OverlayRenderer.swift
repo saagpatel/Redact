@@ -247,7 +247,7 @@ final class OverlayRenderer: OverlayRendering {
     private func makeLayer(frame: CGRect, opacity: Float) -> CAShapeLayer {
         let layer = CAShapeLayer()
         layer.path = UIBezierPath(rect: CGRect(origin: .zero, size: frame.size)).cgPath
-        layer.fillColor = UIColor.label.cgColor
+        layer.fillColor = UIColor.redactInk.cgColor
         layer.frame = frame
         layer.opacity = opacity
         return layer

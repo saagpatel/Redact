@@ -25,7 +25,7 @@ xcodebuild test -scheme Redact -destination 'platform=iOS Simulator,name=iPhone 
 ## Conventions
 - Swift strict concurrency; `@MainActor` on all store/UI-touching code
 - File naming: PascalCase for types and files, camelCase for properties and methods
-- Semantic system colors only (`UIColor.label`, `UIColor.systemBackground`) — no hardcoded UIColor values
+- All color comes from `Theme.swift` (dynamic light+dark "paper and ink" tokens at both UIKit and SwiftUI level) — no color literals outside Theme.swift, so dark/light adaptation stays automatic
 - All FileManager writes are atomic: write to `.tmp`, then `FileManager.replaceItem(at:)`
 - Unit tests cover all engine logic (ParagraphTracker, RedactionState, DocumentStore) before Phase 1 UI
 
@@ -47,6 +47,7 @@ xcodebuild test -scheme Redact -destination 'platform=iOS Simulator,name=iPhone 
 | Reveal duration | `min(5.0, max(2.0, wordCount / 200.0))` seconds | Proportional to document length, always feels meaningful |
 | Training mode | Opt-in, fires on first document only, 4 full visible paragraphs (vs 1 default) | Reduces bounce rate from anxious new users |
 | Pricing | $3.99 one-time, no IAP, no subscription | Signals quality tool, not a gimmick |
+| Design language | "Paper and ink" theme in Theme.swift: warm paper surfaces, serif masthead + titles, mono-caps eyebrows, bar-shaped buttons, one stamp-red accent for live/destructive signals | Carries the redaction-bar identity through the chrome instead of default iOS styling; matches the writing surface's New York serif |
 | iCloud | Disabled — no iCloud entitlement | Keeps app simple; avoids requiring iCloud account |
 
 See IMPLEMENTATION-ROADMAP.md for phases, acceptance criteria, and submission checklist.
