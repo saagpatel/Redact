@@ -64,6 +64,41 @@ Redact is a premium iPhone writing app that progressively hides completed paragr
 **Phase 4: App Store Submission** (code complete; Phases 0–3 shipped)
 See IMPLEMENTATION-ROADMAP.md for full phase details, acceptance criteria, and submission checklist.
 
+## Distribution State (2026-08-23)
+
+Everything App-Store-facing that can be done without operator-only input is DONE.
+The app record is `com.redact.app`, App ID 6762118923, version 1.0.0 (iOS) in
+`PREPARE_FOR_SUBMISSION`. Completed via the App Store Connect API this date:
+
+- Builds 2 and 3 (1.0.0) uploaded and processed (`VALID`); **build 3 is attached**
+  to the version. Build numbers 1–3 are consumed — next upload must be 4
+  (`CURRENT_PROJECT_VERSION` in project.yml, kept in lockstep with
+  `DK_BUILD_NUMBER` in distkit.ios.config.sh).
+- Name "Redact — Forward-Only Writing", subtitle, description, keywords,
+  promotional text, support + privacy-policy URLs set from APPSTORE-METADATA.md.
+- 4 screenshots (1320×2868) uploaded, asset state COMPLETE.
+- Age rating questionnaire answered → 4+. Categories Productivity/Reference.
+- Price $3.99 USD (pre-existing schedule). Availability: all 175 territories.
+- Export compliance declared (`usesNonExemptEncryption: false`).
+- Content rights: does not use third-party content.
+- A review submission shell exists (id `9efe1195-3ed4-4f92-aaad-40948c90f020`,
+  `READY_FOR_REVIEW`, empty — the version cannot be added yet, see below).
+
+**Blocked on operator-only input (the ONLY remaining gates):**
+1. **App Review contact phone number** — `appStoreReviewDetails` requires
+   `contactPhone`; agents must not invent one. Once provided, POST the review
+   detail (name/email/notes already drafted in APPSTORE-METADATA.md).
+2. **App Privacy labels ("Data Not Collected")** — no public ASC API exposes
+   privacy-label publishing (verified against Apple's OpenAPI spec 2026-08-23);
+   confirm in App Store Connect UI → App Privacy. The bundled
+   PrivacyInfo.xcprivacy already declares no collection/no tracking.
+
+After both: add the version to the review submission and submit. Archive/upload
+path: `distribution-kit` iOS lane with `distkit.ios.config.sh` (manual signing —
+automatic archive signing fails on this team: no registered devices). Receipts
+in `dist-receipts/` (gitignored) and mirrored in the Foundation Zero campaign
+workspace.
+
 ## Stack
 
 - Language: Swift 5.9+

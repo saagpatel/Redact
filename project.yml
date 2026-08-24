@@ -37,7 +37,10 @@ targets:
         # iPad is an App Store availability setting.
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        # Builds 1 (2026-04-13, expired) and 2 (2026-08-23) are already uploaded
+        # to App Store Connect; their numbers are consumed for version 1.0.0.
+        # Keep this in lockstep with DK_BUILD_NUMBER in distkit.ios.config.sh.
+        CURRENT_PROJECT_VERSION: "3"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: false
         ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: false

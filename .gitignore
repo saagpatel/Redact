@@ -13,3 +13,6 @@ build/
 # macOS
 .DS_Store
 CLAUDE.md.bak
+
+# distribution-kit lane receipts (dated evidence, mirrored to the campaign workspace)
+dist-receipts/
