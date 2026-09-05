@@ -180,7 +180,7 @@ Training mode is active on first launch (shows more visible paragraphs to help n
 - [ ] Age rating questionnaire complete (4+)
 - [ ] Support URL and Privacy Policy URL provided
 - [ ] TestFlight internal test complete (5 documents written, revealed, exported)
-- [ ] Submit for Review
+- [x] Submit for Review (2026-09-05, WAITING_FOR_REVIEW)
 
 ## Copyright
 © 2026 saagpatel

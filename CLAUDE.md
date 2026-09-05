@@ -84,6 +84,8 @@ The app record is `com.redact.app`, App ID 6762118923, version 1.0.0 (iOS) in
 - A review submission shell exists (id `9efe1195-3ed4-4f92-aaad-40948c90f020`,
   `READY_FOR_REVIEW`, empty — the version cannot be added yet, see below).
 
+**Update 2026-09-05:** both gates cleared. Operator published the App Privacy labels in the ASC UI and supplied the review contact phone; review detail `e5cb2d69` posted via the API, version 1.0.0 (build 3) added to submission `9efe1195` and submitted at 15:17 UTC. State: `WAITING_FOR_REVIEW`. The section below is history.
+
 **Blocked on operator-only input (the ONLY remaining gates):**
 1. **App Review contact phone number** — `appStoreReviewDetails` requires
    `contactPhone`; agents must not invent one. Once provided, POST the review
