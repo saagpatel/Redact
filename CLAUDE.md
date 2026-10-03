@@ -12,15 +12,13 @@ Premium iPhone writing app that progressively hides completed paragraphs with an
 - Persistence: FileManager (JSON files in app sandbox)
 - Dependencies: None — zero third-party packages
 - Minimum deployment: iOS 16.0
-- Xcode: 15+
+- Xcode: 16+ (Swift 6 language mode)
 
 ## Build / Test / Run
 Build and run on simulator or device via Xcode. Tap **New Session** to start writing.
 
-Run unit tests via Xcode or:
-```
-xcodebuild test -scheme Redact -destination 'platform=iOS Simulator,name=iPhone 15'
-```
+Use the [README verification instructions](README.md#verification) for generated-project,
+unsigned simulator tests, focused test selection and Release build commands.
 
 ## Conventions
 - Swift strict concurrency; `@MainActor` on all store/UI-touching code

@@ -19,7 +19,8 @@ Redact is an iOS writing app built around a single constraint: as you finish eac
 ## Quick Start
 
 ### Prerequisites
-- Xcode 15+, iOS 16.0+
+- macOS with full Xcode 16+ selected (Swift 6 language mode), iOS 16.0+
+- An installed iOS Simulator runtime and an available device matching your destination
 - XcodeGen (`brew install xcodegen`)
 
 ### Installation
@@ -33,11 +34,49 @@ open Redact.xcodeproj
 ### Usage
 Build and run on simulator or device. Tap **New Session** to start writing — the first paragraph stays visible until you press Return, then it redacts.
 
+## Verification
+
+Run from the repository root. The Makefile regenerates the gitignored Xcode
+project before every build/test; do not test a stale generated project. Full
+Xcode is required, not only Command Line Tools. CI uses the same unsigned lanes:
+
+```sh
+make test
+make release
+```
+
+`make test` defaults to the `iPhone 17 Pro` simulator without pinning its OS
+version. If that device is unavailable, choose a device/runtime installed in your
+Xcode and override the destination, for example:
+
+```sh
+make test SIMULATOR='platform=iOS Simulator,name=iPhone 16 Pro'
+```
+
+For a focused engine test, generate first and select the test class:
+
+```sh
+make generate
+xcodebuild test -project Redact.xcodeproj -scheme Redact \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:RedactTests/OverlayRendererTests CODE_SIGNING_ALLOWED=NO
+```
+
+Adjust that destination as above. `make build` compiles for the simulator;
+`make release` compiles unsigned Release for generic iOS. The project has no
+configured lint/format command. For writing, redaction, reveal, restore or app-chrome
+changes, also exercise the affected flow with synthetic documents in a simulator
+(including light/dark mode and relevant text direction). Unit tests and compilation
+do not establish visual usability. Browser checks do not apply to this native app.
+
+App Store screenshot capture, signing, archive/export and `scripts/ship-appstore.sh`
+are separate release operations; routine verification does not upload or submit.
+
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| Language | Swift 5.9 (strict concurrency) |
+| Language | Swift 6 (strict concurrency) |
 | UI | SwiftUI |
 | Persistence | JSON files via DocumentStore |
 | Testing | XCTest (unit tests for engine, models, store) |
