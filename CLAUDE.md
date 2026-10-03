@@ -1,21 +1,21 @@
 # Redact
 
 ## Overview
-Premium iPhone writing app that progressively hides completed paragraphs with animated black-bar redactions. Writers work forward-only — no scrolling back, no editing previous paragraphs — then long-press Done to reveal in a cascade animation. $3.99 one-time, local-only, no cloud, no accounts.
+Premium iPhone writing app that progressively hides completed paragraphs with animated black-bar redactions. Writers work forward-only — no editing previous paragraphs while writing — then long-press Done to reveal in a cascade animation. $3.99 one-time, local-only, no cloud, no accounts.
 
 ## Stack
-- Language: Swift 5.9+
+- Language: Swift 6 (strict concurrency)
 - UI: SwiftUI (app shell, navigation, document list, stats, settings)
 - Text rendering: UIKit / UITextView wrapped in UIViewRepresentable
-- Animation: Core Animation (CAShapeLayer) — GPU-accelerated per-line overlays
-- Text layout: CoreText — line rect calculation for overlay positioning
+- Animation: Core Animation (CAShapeLayer) — per-line full overlays and merged glyph-run partial overlays
+- Text layout: TextKit (NSLayoutManager) — line and glyph rect calculation for overlay positioning
 - Persistence: FileManager (JSON files in app sandbox)
 - Dependencies: None — zero third-party packages
 - Minimum deployment: iOS 16.0
 - Xcode: 16+ (Swift 6 language mode)
 
 ## Build / Test / Run
-Build and run on simulator or device via Xcode. Tap **New Session** to start writing.
+Build and run on simulator or device via Xcode. Tap **+**, then **Start Writing** to start writing.
 
 Use the [README verification instructions](README.md#verification) for generated-project,
 unsigned simulator tests, focused test selection and Release build commands.
@@ -23,13 +23,13 @@ unsigned simulator tests, focused test selection and Release build commands.
 ## Conventions
 - Swift strict concurrency; `@MainActor` on all store/UI-touching code
 - File naming: PascalCase for types and files, camelCase for properties and methods
-- All color comes from `Theme.swift` (dynamic light+dark "paper and ink" tokens at both UIKit and SwiftUI level) — no color literals outside Theme.swift, so dark/light adaptation stays automatic
-- All FileManager writes are atomic: write to `.tmp`, then `FileManager.replaceItem(at:)`
-- Unit tests cover all engine logic (ParagraphTracker, RedactionState, DocumentStore) before Phase 1 UI
+- Custom foreground/background colors come from `Redact/Views/Theme.swift` (dynamic light+dark "paper and ink" tokens at both UIKit and SwiftUI level); `StatsView.swift` also uses a black shadow. Define new custom colors in Theme.swift so dark/light adaptation stays automatic
+- DocumentStore and AppState writes are atomic: write to `.tmp`, then `FileManager.replaceItemAt(_:withItemAt:)` for existing files or `moveItem(at:to:)` for new files; exports use atomic String writes
+- Unit tests cover ParagraphTracker, RedactionState, DocumentStore, VisibilityEngine, OverlayRenderer and RevealAnimator
 
 ## Constraints
 - Zero external packages — use no Swift Package Manager dependencies
-- Redaction rendering: per-line CAShapeLayer via CoreText line rects (not per-character CALayer)
+- Redaction rendering: CAShapeLayer via TextKit rects — per line for full masks, per merged adjacent glyph run for partial masks
 - Storage: FileManager JSON files in the app sandbox only — not UserDefaults
 - No iCloud entitlement; no network entitlements — this app makes zero network calls
 - Phase gate: implement only features in the current phase of IMPLEMENTATION-ROADMAP.md; validate ParagraphTracker and OverlayRenderer with tests and the isolated test harness before any app UI
@@ -37,13 +37,13 @@ unsigned simulator tests, focused test selection and Release build commands.
 ## Key Decisions
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Text rendering | UITextView in UIViewRepresentable | Required for CoreText layout access and overlay rect positioning |
-| Redaction rendering | CAShapeLayer per text line (CoreText metrics) | Avoids per-character layer explosion; O(lines) not O(characters) |
-| Paragraph trigger | On `\n` insertion with ≥1 non-whitespace char in current paragraph | Prevents empty return presses from triggering animation |
-| Session restore | Serialize RedactionState (paragraph index + VisibilityLevel) as JSON | Restores exact visibility state on relaunch without recomputing |
+| Text rendering | UITextView in UIViewRepresentable | Required for TextKit layout access and overlay rect positioning |
+| Redaction rendering | CAShapeLayer per line for full masks, per merged glyph run for partial masks (TextKit metrics) | Full masks scale with lines; partial masks can scale with characters |
+| Paragraph trigger | When the paragraph count increases (including paste), with ≥1 non-whitespace char in the completed paragraph | Prevents empty return presses from triggering animation |
+| Session restore | Serialize RedactionState (paragraph index + VisibilityLevel) as JSON | Restores visibility levels on relaunch; partial character masks are regenerated from document.id, paragraph index and length |
 | Partial redaction seeding | Seed from document.id for consistent character selection across restores | Same characters hidden every time for a given document |
 | Reveal duration | `min(5.0, max(2.0, wordCount / 200.0))` seconds | Proportional to document length, always feels meaningful |
-| Training mode | Opt-in, fires on first document only, 4 full visible paragraphs (vs 1 default) | Reduces bounce rate from anxious new users |
+| Training mode | Enabled by default, fires on first document only, 4 full visible paragraphs (vs 1 normally) | Reduces bounce rate from anxious new users |
 | Pricing | $3.99 one-time, no IAP, no subscription | Signals quality tool, not a gimmick |
 | Design language | "Paper and ink" theme in Theme.swift: warm paper surfaces, serif masthead + titles, mono-caps eyebrows, bar-shaped buttons, one stamp-red accent for live/destructive signals | Carries the redaction-bar identity through the chrome instead of default iOS styling; matches the writing surface's New York serif |
 | iCloud | Disabled — no iCloud entitlement | Keeps app simple; avoids requiring iCloud account |
@@ -55,7 +55,7 @@ See IMPLEMENTATION-ROADMAP.md for phases, acceptance criteria, and submission ch
 
 ## What This Project Is
 
-Redact is a premium iPhone writing app that progressively hides completed paragraphs with animated black-bar redactions as you write. Writers work forward-only — no scrolling back, no editing previous paragraphs — then long-press Done to reveal the full document in a cascade animation. The constraint eliminates re-reading and premature editing, forcing a true first-draft mindset. $3.99 one-time, local-only, no cloud, no accounts.
+Redact is a premium iPhone writing app that progressively hides completed paragraphs with animated black-bar redactions as you write. Writers work forward-only — no editing previous paragraphs while writing — then long-press Done to reveal the full document in a cascade animation. The constraint prevents editing earlier paragraphs during the writing session. $3.99 one-time, local-only, no cloud, no accounts.
 
 ## Current State
 
@@ -101,25 +101,25 @@ workspace.
 
 ## Stack
 
-- Language: Swift 5.9+
+- Language: Swift 6 (strict concurrency)
 - UI: SwiftUI (app shell, navigation, document list, stats, settings)
 - Text rendering: UIKit / UITextView wrapped in UIViewRepresentable
-- Animation: Core Animation (CAShapeLayer) — GPU-accelerated per-line overlays
-- Text layout: CoreText — line rect calculation for overlay positioning
+- Animation: Core Animation (CAShapeLayer) — per-line full overlays and merged glyph-run partial overlays
+- Text layout: TextKit (NSLayoutManager) — line and glyph rect calculation for overlay positioning
 - Persistence: FileManager (JSON files in app sandbox)
 - Dependencies: None — zero third-party packages
 - Minimum deployment: iOS 16.0
-- Xcode: 15+
+- Xcode: 16+ (Swift 6 language mode)
 
 ## How To Run
 
-Build and run on simulator or device. Tap **New Session** to start writing — the first paragraph stays visible until you press Return, then it redacts.
+Build and run on simulator or device. Tap **+**, then **Start Writing** — completed paragraphs become partially visible or fully redacted as they leave the configured visibility zones (training mode keeps 4 paragraphs fully visible on the first document).
 
 ## Known Risks
 
 - Do not add third-party Swift Package Manager dependencies — zero external packages
-- Do not implement per-character CALayer overlays — use per-line CAShapeLayer via CoreText line rects
-- Do not use hardcoded UIColor values — use semantic system colors for automatic dark/light adaptation
+- Use TextKit rects for CAShapeLayer overlays — per line for full masks, per merged adjacent glyph run for partial masks
+- Do not add hardcoded UIColor values outside Theme.swift — use its dynamic paper and ink tokens for automatic dark/light adaptation
 - Do not skip Phase 0 engine validation — ParagraphTracker and OverlayRenderer must pass tests and the isolated test harness before any app UI is built
 - Do not add features not in the current phase of IMPLEMENTATION-ROADMAP.md
 - Do not enable iCloud or any network entitlements — this app makes zero network calls
