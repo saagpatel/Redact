@@ -4,14 +4,14 @@
 
 > Write without looking back.
 
-Redact is an iOS writing app built around a single constraint: as you finish each paragraph, it disappears behind a black bar. You cannot revisit or edit the hidden text. You can only move forward. When you're done, hold the Done button and watch your entire document reveal itself — read as a reader, not as the writer who second-guessed every sentence.
+Redact is an iOS writing app built around a single constraint: completed paragraphs become partially visible or disappear behind black bars as they leave the configured visibility zones. You cannot edit previous paragraphs while writing. Only the last paragraph remains editable. When you're done, hold the Done button and watch your entire document reveal itself — read as a reader, not as the writer who second-guessed every sentence.
 
 ## Features
 
-- **Progressive redaction** — completed paragraphs hide behind black bars as you write the next
+- **Progressive redaction** — completed paragraphs become partially visible or hide behind black bars as they leave the configured visibility zones
 - **Configurable visibility zone** — set how many partially-visible paragraphs appear as a buffer
-- **Hold-to-reveal** — long-pressing Done triggers a cascade reveal animation proportional to document length
-- **Writing stats** — word count, paragraph count, session WPM, and longest uninterrupted streak shown after reveal
+- **Hold-to-reveal** — at 50+ words, long-pressing Done triggers a cascade reveal animation proportional to document length
+- **Writing stats** — word count, paragraph count, session duration, and WPM shown after reveal
 - **Word count targets** — set a goal before writing with live progress during the session
 - **Export** — plain text, Markdown with YAML front matter, or the system share sheet
 - **Zero dependencies** — pure Swift with no third-party packages
@@ -32,7 +32,7 @@ open Redact.xcodeproj
 ```
 
 ### Usage
-Build and run on simulator or device. Tap **New Session** to start writing — the first paragraph stays visible until you press Return, then it redacts.
+Build and run on simulator or device. Tap **+**, then **Start Writing** — completed paragraphs become partially visible or fully redacted as they leave the configured visibility zones (training mode keeps 4 paragraphs fully visible on the first document).
 
 ## Verification
 
